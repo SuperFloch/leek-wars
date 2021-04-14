@@ -40,7 +40,17 @@
 	top: auto;
 	bottom: -7px;
 	border-bottom: none;
-	border-top: 7px solid rgba(0,0,0, 0.7);
+	border-top: 7px solid rgba(51,51,51, 0.9);
+}
+.v-tooltip__content.left::before {
+	left: auto;
+	right: -11px;
+	margin-top: -4px;
+	top: 50%;
+	border-bottom: none;
+	border-top: 4px solid transparent;
+	border-left: 7px solid rgba(51,51,51, 0.9);
+	border-bottom: 4px solid transparent;
 }
 .v-dialog {
 	margin: 12px !important;
@@ -710,6 +720,9 @@ img.emoji {
 }
 .color-strength {
 	color: #833100;
+	&.dark {
+		color: #c05415;
+	}
 }
 .color-wisdom {
 	color: #5ebe00;
@@ -725,9 +738,15 @@ img.emoji {
 }
 .color-science {
 	color: #0000a2;
+	&.dark {
+		color: #2a63ff;
+	}
 }
 .color-magic {
 	color: #b800b6;
+	&.dark {
+		color: #d810d5;
+	}
 }
 .color-tp {
 	color: #ff7f01;
@@ -878,4 +897,24 @@ body {
 }
 .pointer {
 	cursor: pointer;
+}
+
+.notif-trophy {
+	background: linear-gradient(0deg, #ffb029, #ffdc3a);
+	border-radius: 2px;
+	border: 1px solid #ffb430;
+	.large-icon {
+		color: white;
+	}
+}
+.notif-bigwin {
+	background: linear-gradient(0deg, #0d2ad3, #329cff);
+	border-radius: 2px;
+	border: 1px solid #329cff;
+	&, .date, .message, .title {
+		color: white;
+	}
+	.large-icon {
+		color: white;
+	}
 }

@@ -1,9 +1,9 @@
 <template>
-	<v-menu ref="menu" :close-on-content-click="false" offset-overflow :disabled="disabled || id <= 0" :nudge-width="expand_leeks ? 500 : 200" :nudge-top="bottom ? 0 : 6" :open-delay="_open_delay" :close-delay="_close_delay" :top="!bottom" :bottom="bottom" :transition="instant ? 'none' : 'my-transition'" :open-on-hover="!locked" offset-y @input="open($event)">
+	<v-menu ref="menu" v-model="value" :close-on-content-click="false" offset-overflow :disabled="disabled || id <= 0" :nudge-width="expand_leeks ? 500 : 200" :nudge-top="bottom ? 0 : 6" :open-delay="_open_delay" :close-delay="_close_delay" :top="!bottom" :bottom="bottom" :transition="instant ? 'none' : 'my-transition'" :open-on-hover="!locked" offset-y @input="open($event)">
 		<template v-slot:activator="{ on }">
 			<slot :on="on"></slot>
 		</template>
-		<div class="card">
+		<div class="card" @mouseenter="mouse = true" @mouseleave="mouse = false">
 			<loader v-if="!farmer" :size="30" />
 			<template v-else>
 				<div class="flex">
@@ -36,6 +36,7 @@
 				</div>
 				<talent :id="farmer.id" :talent="farmer.talent" category="farmer" />
 				<span class="talent-more">({{ farmer.talent_more >= 0 ? '+' + farmer.talent_more : farmer.talent_more }})</span>
+				<ranking-badge v-if="farmer && farmer.ranking <= 1000 && farmer.in_garden" :id="farmer.id" :ranking="farmer.ranking" category="farmer" />
 				<span class="level">• {{ $t('main.level_n', [farmer.total_level]) }}</span>
 				<v-btn class="expand" icon small @click="expand_leeks = !expand_leeks">
 					<v-icon v-if="expand_leeks">mdi-chevron-up</v-icon>
@@ -50,7 +51,7 @@
 					</tr>
 					<tr v-for="leek in farmer.leeks" :key="leek.id">
 						<td class="leek-name">
-							<rich-tooltip-leek :id="leek.id" v-slot="{ on }" :bottom="true" @input="locked = $event">
+							<rich-tooltip-leek :id="leek.id" v-slot="{ on }" :bottom="true" @input="setParent">
 								<router-link :to="'/leek/' + leek.id">
 									<span v-on="on">{{ leek.name }}</span>
 								</router-link>
@@ -83,6 +84,8 @@
 		expand_leeks: boolean = false
 		sums: {[key: string]: number} = {}
 		locked: boolean = false
+		mouse: boolean = false
+		value: boolean = false
 
 		get _open_delay() {
 			return this.instant ? 0 : 200
@@ -96,6 +99,7 @@
 			this.content_created = false
 		}
 		open(v: boolean) {
+			this.$emit('input', v)
 			this.expand_leeks = localStorage.getItem('richtooltipfarmer/expanded') === 'true'
 			if (this.content_created) { return }
 			this.content_created = true
@@ -124,6 +128,14 @@
 		@Watch('expand_leeks')
 		updateExpand() {
 			localStorage.setItem('richtooltipfarmer/expanded', this.expand_leeks ? 'true' : 'false')
+		}
+
+		setParent(event: boolean) {
+			this.locked = event
+			if (!event && !this.mouse) {
+				this.value = false
+				this.$emit('input', false)
+			}
 		}
 	}
 </script>
@@ -191,6 +203,11 @@
 		display: inline-block;
 		vertical-align: top;
 		margin-top: 10px;
+	}
+	.badge {
+		margin-bottom: 2px;
+		vertical-align: bottom;
+		margin-right: 0;
 	}
 	.level {
 		display: inline-block;

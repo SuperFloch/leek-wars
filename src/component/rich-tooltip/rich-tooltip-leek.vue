@@ -1,9 +1,9 @@
 <template>
-	<v-menu ref="menu" :close-on-content-click="false" offset-overflow :disabled="disabled" :nudge-top="bottom ? 0 : 6" :open-delay="_open_delay" :close-delay="_close_delay" :top="!bottom" :bottom="bottom" :transition="instant ? 'none' : 'my-transition'" :open-on-hover="!locked" offset-y @input="open($event)">
+	<v-menu ref="menu" v-model="value" :close-on-content-click="false" offset-overflow :disabled="disabled" :nudge-top="bottom ? 0 : 6" :open-delay="_open_delay" :close-delay="_close_delay" :top="!bottom" :bottom="bottom" :transition="instant ? 'none' : 'my-transition'" :open-on-hover="!locked" offset-y @input="open($event)">
 		<template v-slot:activator="{ on }">
 			<slot :on="on"></slot>
 		</template>
-		<div :class="{expanded: expand_items}" class="card">
+		<div :class="{expanded: expand_items}" class="card" @mouseenter="mouse = true" @mouseleave="mouse = false">
 			<loader v-if="!leek" :size="30" />
 			<template v-else>
 				<div class="flex">
@@ -25,6 +25,7 @@
 						</span>
 						<talent :id="leek.id" :talent="leek.talent" category="leek" />
 						<span class="talent-more">({{ leek.talent_more >= 0 ? '+' + leek.talent_more : leek.talent_more }})</span>
+						<ranking-badge v-if="leek && leek.ranking <= 1000 && leek.in_garden" :id="leek.id" :ranking="leek.ranking" category="leek" />
 						<span class="level">• {{ $t('main.level_n', [leek.level]) }}</span>
 						<v-btn class="expand" icon small @click="expand_items = !expand_items">
 							<v-icon v-if="expand_items">mdi-chevron-up</v-icon>
@@ -49,12 +50,12 @@
 					</table>
 					<div class="items">
 						<div class="weapons">
-							<rich-tooltip-weapon v-for="weapon in leek.orderedWeapons" :key="weapon.id" v-slot="{ on }" :weapon="LeekWars.weapons[LeekWars.items[weapon.template].params]" :bottom="true" :instant="true" @input="locked = $event">
+							<rich-tooltip-weapon v-for="weapon in leek.orderedWeapons" :key="weapon.id" v-slot="{ on }" :weapon="LeekWars.weapons[LeekWars.items[weapon.template].params]" :bottom="true" :instant="true" @input="setParent">
 								<img :src="'/image/' + LeekWars.items[weapon.template].name.replace('_', '/') + '.png'" class="weapon" v-on="on">
 							</rich-tooltip-weapon>
 						</div>
 						<div class="chips">
-							<rich-tooltip-chip v-for="chip in leek.orderedChips" :key="chip.id" v-slot="{ on }" :chip="LeekWars.chips[chip.template]" :bottom="true" :instant="true" @input="locked = $event">
+							<rich-tooltip-chip v-for="chip in leek.orderedChips" :key="chip.id" v-slot="{ on }" :chip="LeekWars.chips[chip.template]" :bottom="true" :instant="true" @input="setParent">
 								<img :src="'/image/chip/' + LeekWars.chips[chip.template].name + '.png'" class="chip" v-on="on">
 							</rich-tooltip-chip>
 						</div>
@@ -80,6 +81,8 @@
 		leek: Leek | null = null
 		expand_items: boolean = false
 		locked: boolean = false
+		mouse: boolean = false
+		value: boolean = false
 
 		get _open_delay() {
 			return this.instant ? 0 : 200
@@ -109,6 +112,14 @@
 		@Watch('expand_items')
 		updateExpand() {
 			localStorage.setItem('richtooltipleek/expanded', this.expand_items ? 'true' : 'false')
+		}
+
+		setParent(event: boolean) {
+			this.locked = event
+			if (!event && !this.mouse) {
+				this.value = false
+				this.$emit('input', false)
+			}
 		}
 	}
 </script>
@@ -152,6 +163,11 @@
 		.title {
 			font-size: 14px;
 		}
+		.badge {
+			margin-bottom: 2px;
+			vertical-align: bottom;
+			margin-right: 3px;
+		}
 	}
 	.name {
 		display: flex;
@@ -193,7 +209,7 @@
 		display: inline-block;
 		font-size: 15px;
 		font-weight: 500;
-		margin-left: 5px;
+		margin-left: 3px;
 		vertical-align: top;
 		margin-top: 10px;
 		color: #555;
@@ -245,11 +261,11 @@
 		width: 600px;
 	}
 	.weapons {
-		flex: 0.85;
-		padding: 10px;
+		flex: 0.8;
+		padding: 4px;
 		.weapon {
-			width: 115px;
-			max-height: 46px;
+			width: 110px;
+			max-height: 35px;
 			margin: 8px;
 			vertical-align: middle;
 			object-fit: contain;
@@ -259,7 +275,7 @@
 		flex: 1;
 		padding: 4px;
 		.chip {
-			width: 40px;
+			width: 32px;
 			margin: 2px;
 			vertical-align: top;
 		}

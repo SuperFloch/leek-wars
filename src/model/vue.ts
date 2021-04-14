@@ -22,9 +22,12 @@ import ReportDialog from '@/component/moderation/report-dialog.vue'
 import NotificationElement from '@/component/notifications/notification.vue'
 import Pagination from '@/component/pagination.vue'
 import Popup from '@/component/popup.vue'
+import RankingBadge from '@/component/ranking-badge.vue'
 import RichTooltipChip from '@/component/rich-tooltip/rich-tooltip-chip.vue'
+import RichTooltipComposition from '@/component/rich-tooltip/rich-tooltip-composition.vue'
 import RichTooltipFarmer from '@/component/rich-tooltip/rich-tooltip-farmer.vue'
 import RichTooltipLeek from '@/component/rich-tooltip/rich-tooltip-leek.vue'
+import RichTooltipTeam from '@/component/rich-tooltip/rich-tooltip-team.vue'
 import RichTooltipWeapon from '@/component/rich-tooltip/rich-tooltip-weapon.vue'
 import Talent from '@/component/talent.vue'
 import TitlePicker from '@/component/title/title-picker.vue'
@@ -73,6 +76,7 @@ Vue.component('turret-image', TurretImage)
 Vue.component('avatar', Avatar)
 Vue.component('emblem', Emblem)
 Vue.component('talent', Talent)
+Vue.component('ranking-badge', RankingBadge)
 Vue.component('chat', ChatElement)
 Vue.component('comments', Comments)
 Vue.component('report-dialog', ReportDialog)
@@ -93,8 +97,10 @@ Vue.component('panel', Panel)
 Vue.component('popup', Popup)
 Vue.component('rich-tooltip-farmer', RichTooltipFarmer)
 Vue.component('rich-tooltip-leek', RichTooltipLeek)
+Vue.component('rich-tooltip-composition', RichTooltipComposition)
 Vue.component('rich-tooltip-weapon', RichTooltipWeapon)
 Vue.component('rich-tooltip-chip', RichTooltipChip)
+Vue.component('rich-tooltip-team', RichTooltipTeam)
 Vue.component('loader', LWLoader)
 Vue.component('lw-title', LWTitle)
 Vue.component('title-picker', TitlePicker)
@@ -156,18 +162,19 @@ Vue.directive('latex', {
 })
 Vue.directive('chat-code-latex', {
 	inserted: (el) => {
-		el.innerHTML = el.innerHTML.replace(/\$(.*?)\$/, (str: string) => {
+		el.innerHTML = el.innerHTML.replace(/\$(.*?)\$/g, (str: string) => {
 			return "<latex>" + str.replace(/`/g, "") + "</latex>"
 		})
-		el.innerHTML = el.innerHTML.replace(/```(.*?)```/, (str: string, code: string) => {
+		el.innerHTML = el.innerHTML.replace(/```(.*?)```/g, (str: string, code: string) => {
 			return "<code>" + code + "</code>"
 		})
-		el.innerHTML = el.innerHTML.replace(/`(.*?)`/, (str: string, code: string) => {
+		el.innerHTML = el.innerHTML.replace(/`(.*?)`/g, (str: string, code: string) => {
 			return "<code>" + code + "</code>"
 		})
 		el.querySelectorAll('code').forEach((c) => {
 			if (c.innerHTML.indexOf("<br>") !== -1) {
-				LeekWars.createCodeArea(c.innerText.trim(), c)
+				const code = LeekWars.decodehtmlentities(c.innerHTML).replace(/<br>/gi, "\n").trim()
+				LeekWars.createCodeArea(code, c)
 			} else {
 				c.classList.add('single')
 				LeekWars.createCodeAreaSimple(c.innerText, c)
@@ -220,8 +227,10 @@ const vueMain = new Vue({
 	},
 	created() {
 		window.addEventListener('keydown', (event) => {
-			this.$emit('keydown', event)
-			if (event.ctrlKey && event.keyCode === 83) {
+			this.$emit('keydown', event) 
+			if (event.ctrlKey && event.shiftKey && event.keyCode === 83) {
+				this.$emit('ctrlShiftS')
+			} else if (event.ctrlKey && event.keyCode === 83) {
 				this.$emit('ctrlS')
 				event.preventDefault()
 			} else if (event.ctrlKey && event.keyCode === 81) {
@@ -260,12 +269,16 @@ const vueMain = new Vue({
 		}, 1000 * 60)
 
 		this.$on('loaded', () => {
-			if (this.$data.savedPosition > 0) {
-				setTimeout(() => {
+			Vue.nextTick(() => {
+				// console.log("loaded", this.$data.savedPosition)
+				if (this.$data.savedPosition > 0) {
 					window.scrollTo(0, this.$data.savedPosition)
-					this.$data.savedPosition = 0
-				}, 100)
-			}
+					setTimeout(() => {
+						window.scrollTo(0, this.$data.savedPosition)
+						this.$data.savedPosition = 0
+					}, 100)
+				}
+			})
 		})
 		this.$on('connected', () => {
 			LeekWars.socket.connect()

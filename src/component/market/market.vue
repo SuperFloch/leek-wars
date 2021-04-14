@@ -182,8 +182,8 @@
 				<b>{{ $t('habs_after_purchase') }}</b> : {{ $store.state.farmer.habs - selectedItem.price | number }} <span class="hab"></span>
 			</div>
 			<div slot="actions">
-				<div @click="buyDialog = false">{{ $t('cancel') }}</div>
-				<div class="buy green" @click="buy('habs')">{{ $t('buy') }}</div>
+				<div v-ripple @click="buyDialog = false">{{ $t('cancel') }}</div>
+				<div v-ripple class="buy green" @click="buy('habs')">{{ $t('buy') }}</div>
 			</div>
 		</popup>
 
@@ -202,8 +202,8 @@
 				<b>{{ $t('crystals_after_purchase') }}</b> : {{ $store.state.farmer.crystals - selectedItem.crystals | number }} <span class="crystal"></span>
 			</div>
 			<div slot="actions">
-				<div @click="buyCrystalsDialog = false">{{ $t('cancel') }}</div>
-				<div class="buy green" @click="buy('crystals')">{{ $t('buy') }}</div>
+				<div v-ripple @click="buyCrystalsDialog = false">{{ $t('cancel') }}</div>
+				<div v-ripple class="buy green" @click="buy('crystals')">{{ $t('buy') }}</div>
 			</div>
 		</popup>
 
@@ -222,8 +222,8 @@
 				<b>{{ $t('habs_after_sell') }}</b> : {{ $store.state.farmer.habs + selectedItem.sell_price | number }} <span class="hab"></span>
 			</div>
 			<div slot="actions">
-				<div @click="sellDialog = false">{{ $t('cancel') }}</div>
-				<div class="sell red" @click="sell">{{ $t('sell') }}</div>
+				<div v-ripple @click="sellDialog = false">{{ $t('cancel') }}</div>
+				<div v-ripple class="sell red" @click="sell">{{ $t('sell') }}</div>
 			</div>
 		</popup>
 
@@ -303,7 +303,7 @@
 
 		get max_level() {
 			if (store.state.farmer) {
-				return Object.values(store.state.farmer!.leeks).reduce((s, l) => s + l.level, 0)
+				return LeekWars.first(store.state.farmer.leeks)!.level
 			}
 			return 0
 		}
@@ -337,7 +337,7 @@
 							this.potions.push(potion)
 							this.items_by_name[LeekWars.potions[item.id].name] = item
 						} else {
-							const fakePotion = {...item, name: item.name.replace(/^potion_/, ''), level: 1, consumable: 0, effects: [], template: item.id}
+							const fakePotion = {...item, name: item.name.replace(/^potion_/, ''), level: 1, consumable: 0, effects: [], template: item.id, duration: 0}
 							this.potions.push(fakePotion)
 							this.items_by_name[fakePotion.name] = fakePotion
 						}
@@ -382,7 +382,7 @@
 			LeekWars.setActions(this.actions)
 		}
 		back() {
-			this.$router.push('/market')
+			this.$router.back()
 		}
 		destroyed() {
 			this.$root.$off('back', this.back)
@@ -395,12 +395,14 @@
 				this.selectedItem = this.items_by_name[item]
 				LeekWars.setTitle(this.translateName(this.selectedItem))
 				LeekWars.splitShowContent()
+				this.$root.$emit('loaded')
 			} else if (!LeekWars.mobile) {
 				this.$router.replace('/market/pistol')
 			} else {
 				this.selectedItem = null
 				LeekWars.setTitle(this.$t('title'))
 				LeekWars.splitShowList()
+				this.$root.$emit('loaded')
 			}
 			this.updateSubtitle()
 			LeekWars.setActions(this.actions)
@@ -543,10 +545,6 @@
 </script>
 
 <style lang="scss" scoped>
-	#app.app .column8 {
-		height: calc(100vh - 56px);
-		overflow-y: auto;
-	}
 	.preview-panel .loader {
 		padding: 80px 0;
 	}

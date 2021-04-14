@@ -50,6 +50,7 @@ const Settings = () => import(/* webpackChunkName: "[request]" */ `@/component/s
 const Signup = () => import(/* webpackChunkName: "[request]" */ `@/component/signup/signup.${locale}.i18n`)
 const Statistics = () => import(/* webpackChunkName: "[request]" */ `@/component/statistics/statistics.${locale}.i18n`)
 const SignupResult = () => import(/* webpackChunkName: "[request]" */ `@/component/signup/signup-result.${locale}.i18n`)
+const TalentPage = () => import(/* webpackChunkName: "[request]" */ `@/component/talent/talent.${locale}.i18n`)
 const Team = () => import(/* webpackChunkName: "[request]" */ `@/component/team/team.${locale}.i18n`)
 const Tournament = () => import(/* webpackChunkName: "[request]" */ `@/component/tournament/tournament.${locale}.i18n`)
 const Trophies = () => import(/* webpackChunkName: "[request]" */ `@/component/trophies/trophies.${locale}.i18n`)
@@ -108,8 +109,8 @@ const routes = [
 	{ path: '/conditions', component: Conditions },
 	{ path: '/changelog', component: Changelog },
 	{ path: '/change-email/:state/:token', component: ChangeEmail },
-	{ path: '/encyclopedia', component: Encyclopedia },
-	{ path: '/encyclopedia/:page', component: Encyclopedia },
+	{ path: '/encyclopedia', component: Encyclopedia, meta: {scrollOffset: 45} },
+	{ path: '/encyclopedia/:page', component: Encyclopedia, meta: {scrollOffset: 45} },
 	{ path: '/editor', component: Editor, beforeEnter: connected },
 	{ path: '/editor/:id', component: Editor, beforeEnter: connected },
 	{ path: '/error/:message', component: Error },
@@ -139,8 +140,8 @@ const routes = [
 	{ path: '/login', component: Login, beforeEnter: disconnected },
 	{ path: '/leek/:id', name: 'leek', component: Leek },
 	{ path: '/leek/:id/history', component: History, props: {type: 'leek'} },
-	{ path: '/market', name: 'market', component: Market, meta: {noscroll: true}, beforeEnter: connected },
-	{ path: '/market/:item', component: Market, meta: {noscroll: true}, beforeEnter: connected },
+	{ path: '/market', name: 'market', component: Market, meta: {noscrollapp: true}, beforeEnter: connected },
+	{ path: '/market/:item', component: Market, meta: {noscrollapp: true}, beforeEnter: connected },
 	{ path: '/messages', component: Messages, beforeEnter: connected },
 	{ path: '/messages/conversation/:id', component: Messages, beforeEnter: connected },
 	{ path: '/messages/new/:id/:name/:avatar_changed', component: Messages, beforeEnter: connected },
@@ -166,6 +167,7 @@ const routes = [
 	{ path: '/signup/success/:farmer', component: SignupResult, props: { result: 'success' } },
 	{ path: '/signup/failed', component: SignupResult, props: { result: 'failed' } },
 	{ path: '/statistics', component: Statistics },
+	{ path: '/talent', component: TalentPage },
 	{ path: '/team', component: Team, beforeEnter: connected },
 	{ path: '/team/:id', component: Team },
 	{ path: '/team/:id/history', component: History, props: {type: 'team'} },
@@ -196,15 +198,36 @@ if (process.env.VUE_APP_BANK === 'true') {
 	)
 }
 
+function scroll_to_hash(hash: string, route: Route) {
+	const id = decodeURIComponent(hash).replace(/'/g, '~').substring(1)
+	const element = document.getElementById(id)
+	// console.log("scroll element", id, element, route.meta)
+	if (element) {
+		const offset = (LeekWars.mobile ? 56 : 0) + route.meta.scrollOffset || 0
+		setTimeout(() => {
+			window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - offset)
+		})
+	}
+}
+
 const router = new Router({
 	mode: 'history',
 	base: process.env.BASE_URL,
 	routes,
 	scrollBehavior(to, from, savedPosition) {
+		// console.log("scrollBehavior", to, from, savedPosition)
 		vueMain.$data.savedPosition = 0
+		if (to.hash) {
+			setTimeout(() => {
+				scroll_to_hash(to.hash, to)
+			}, 100)
+			return null
+		}
 		if (savedPosition && !from.hash) {
 			vueMain.$data.savedPosition = savedPosition.y
-		} else if (!to.meta.noscroll) {
+		} else if (LeekWars.mobile && !to.meta.noscrollapp) {
+			return { x: 0, y: 0 }
+		} else if (!to.meta.noscrollapp && !to.meta.noscroll) {
 			return { x: 0, y: 0 }
 		}
 	},
@@ -214,12 +237,8 @@ router.afterEach((to: Route) => {
 	if (to.hash) {
 		vueMain.$once('loaded', () => {
 			setTimeout(() => {
-				const element = document.querySelector(to.hash)
-				if (element) {
-					const offset = LeekWars.mobile ? 56 : 0
-					window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - offset)
-				}
-			})
+				scroll_to_hash(to.hash, to)
+			}, 100)
 		})
 	}
 })

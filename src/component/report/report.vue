@@ -137,6 +137,10 @@
 
 		<panel :title="$t('life_chart')" toggle="report/graph" icon="mdi-chart-line">
 			<div slot="actions">
+				<div v-if="fight && fight.type === FightType.TEAM" class="button flat" @click="toggleTurrets">
+					<img v-if="turrets" src="/image/icon/turret.png">
+					<img v-else src="/image/icon/turret_off.png">
+				</div>
 				<div class="button flat" @click="toggleLog">
 					<v-icon>mdi-percent-outline</v-icon>
 				</div>
@@ -228,7 +232,7 @@
 			</div>
 			<loader v-if="!loaded" />
 			<div v-else>
-				<actions :actions="actions" :leeks="leeks" :display-logs="actionsDisplayLogs" :display-allies-logs="actionsDisplayAlliesLogs" class="actions" />
+				<actions :report="report" :actions="actions" :leeks="leeks" :display-logs="actionsDisplayLogs" :display-allies-logs="actionsDisplayAlliesLogs" class="actions" />
 			</div>
 		</panel>
 	</div>
@@ -273,6 +277,7 @@
 		enemy: any = null
 		smooth: boolean = false
 		log: boolean = false
+		turrets: boolean = false
 		statistics!: FightStatistics
 		chartData: any = null
 		chartOptions: any = null
@@ -313,7 +318,7 @@
 		damagesBarsHeight: number = 0
 		damagesBarsEvents: any
 		damagesDisplaySummons: boolean = false
-		map_obstacles: Set<number> = new Set<number>()
+		map_obstacles: any
 		map_teams: any = null
 		legends: any
 
@@ -345,13 +350,16 @@
 			this.fight = null
 			this.report = null
 			this.actions = null
-			this.smooth = localStorage.getItem('report/graph-type') === 'smooth'
-			this.log = localStorage.getItem('report/log') === 'true'
 
+			if (localStorage.getItem('fight/turrets') === null) { localStorage.setItem('fight/turrets', 'true') }
 			if (localStorage.getItem('fight/logs') === null) { localStorage.setItem('fight/logs', 'true') }
+			if (localStorage.getItem('fight/turrets') === null) { localStorage.setItem('fight/turrets', 'true') }
 			if (localStorage.getItem('fight/allies-logs') === null) { localStorage.setItem('fight/allies-logs', 'true') }
 			this.actionsDisplayLogs = localStorage.getItem('report/logs') === 'true'
 			this.actionsDisplayAlliesLogs = localStorage.getItem('report/allies-logs') === 'true'
+			this.smooth = localStorage.getItem('report/graph-type') === 'smooth'
+			this.log = localStorage.getItem('report/log') === 'true'
+			this.turrets = localStorage.getItem('report/turrets') === 'true'
 
 			const id = this.$route.params.id
 			const url = this.$store.getters.admin ? 'fight/get-private/' + id : 'fight/get/' + id
@@ -376,7 +384,7 @@
 
 				for (const leek of this.fight.data.leeks) {
 					this.leeks[leek.id] = leek as any
-					if (leek.summon) {
+					if (leek.type !== 0) {
 						leek.name = this.$i18n.t('entity.' + leek.name) as string
 					}
 					leek.farmer = this.farmers[leek.farmer]
@@ -452,7 +460,7 @@
 					for (const log of action) {
 						const leek = log[0]
 						const type = log[1]
-						const message = (type >= 6 && type <= 8) ? log[2] + i18n.t('leekscript.' + log[3], log[4]) : log[2]
+						const message = (type >= 6 && type <= 8) ? i18n.t('leekscript.error_' + log[3], log[4]) + "\n" + log[2] : log[2]
 						if (type === 2 || type === 7) {
 							this.warnings.push({entity: this.leeks[leek].name, data: message})
 						} else if (type === 3 || type === 8) {
@@ -485,7 +493,7 @@
 					this.myFight = true
 					this.iWin = this.fight.report.win === 2
 					if (this.fight.type === FightType.SOLO) {
-						this.enemy = this.fight.report.leeks1[0].id
+						this.enemy = this.fight.report.leeks1.length ? this.fight.report.leeks1[0].id : -1
 					} else if (this.fight.type === FightType.FARMER) {
 						this.enemy = this.fight.farmer1
 					}
@@ -517,6 +525,11 @@
 			localStorage.setItem('report/log', '' + this.log)
 			this.updateChart()
 		}
+		toggleTurrets() {
+			this.turrets = !this.turrets
+			localStorage.setItem('report/turrets', '' + this.turrets)
+			this.updateChart()
+		}
 		chartGetY(line: number, x: number) {
 			const path = (this.$refs.chart as Vue).$el.querySelectorAll('.ct-series path')[line] as any
 			x = Math.max(path.getPointAtLength(0).x, x)
@@ -542,6 +555,9 @@
 			let series = this.log ? this.statistics.lives_percent : this.statistics.lives
 			if (!this.chartDisplaySummons) {
 				series = series.filter((value, index) => !this.statistics.entities[index].leek.summon)
+			}
+			if (!this.turrets) {
+				series = series.filter((value, index) => this.statistics.entities[index].leek.name !== 'turret')
 			}
 			this.chartData = {
 				series
@@ -629,7 +645,7 @@
 				const entity = this.statistics.entities[e]
 				let total = 0
 				let stats: any[] = []
-				const name = entity.leek.summon ? this.$t('entity.' + entity.name) : entity.name
+				const name = entity.leek.type !== 0 ? this.$t('entity.' + entity.name) : entity.name
 				if (this.damageChartType === 0) {
 					total = entity.dmg_out
 					stats = [name, entity.leek.id, entity.leek.team, total, entity.direct_dmg_out, entity.poison_out, entity.return_out, entity.nova_out, entity.life_dmg_out]
@@ -743,16 +759,7 @@
 		}
 
 		updateMap() {
-			for (const obstacle in this.fight!.data.map.obstacles) {
-				const obstacle_cell = parseInt(obstacle, 10)
-				this.map_obstacles.add(obstacle_cell)
-				const obs = this.fight!.data.map.obstacles[obstacle]
-				if (obs[1] === 2) {
-					this.map_obstacles.add(obstacle_cell + 17)
-					this.map_obstacles.add(obstacle_cell + 18)
-					this.map_obstacles.add(obstacle_cell + 35)
-				}
-			}
+			this.map_obstacles = this.fight!.data.map.obstacles
 		}
 
 		walkedCells(fid: number) {
@@ -838,6 +845,8 @@
 		padding: 2px 0;
 		font-size: 11px;
 		margin: 0;
+		word-break: break-all;
+		white-space: pre-wrap;
 	}
 	.warning {
 		color: #ff5f00;

@@ -2,7 +2,7 @@
 	<div v-if="constant" class="doc-constant" :class="{item: is_weapon || is_chip, deprecated: constant.deprecated}">
 		<h2 v-if="!is_weapon && !is_chip">{{ constant.name }}</h2>
 		<div v-if="constant.deprecated" v-dochash class="deprecated-message">
-			Cette constante est dépréciée. <span v-if="constant.replacement">Elle est remplacée par la constante #{{ LeekWars.constants[constant.replacement - 1].name }}.</span>
+			Cette constante est dépréciée. <span v-if="constant.replacement">Elle est remplacée par la constante #{{ LeekWars.constantById[constant.replacement].name }}.</span>
 		</div>
 		<chip-preview v-if="is_chip" :chip="LeekWars.chips[constant.value]" />
 		<weapon-preview v-else-if="is_weapon" :weapon="LeekWars.weapons[LeekWars.items[constant.value].params]" />
@@ -59,6 +59,12 @@
 						items.push(LeekWars.chips[i])
 					}
 				}
+			} else if (this.constant.name.startsWith("AREA_")) {
+				for (const i in LeekWars.chips) {
+					if (LeekWars.chips[i].area === this.value_int) {
+						items.push(LeekWars.chips[i])
+					}
+				}
 			}
 			return items
 		}
@@ -73,6 +79,12 @@
 			} else if (this.constant.name.startsWith("EFFECT_") && !this.constant.name.startsWith("EFFECT_TARGET_")) {
 				for (const i in LeekWars.weapons) {
 					if (LeekWars.weapons[i].effects.some((e) => e.id === this.value_int) || LeekWars.weapons[i].passive_effects.some((e) => e.id === this.value_int)) {
+						items.push(LeekWars.weapons[i])
+					}
+				}
+			} else if (this.constant.name.startsWith("AREA_")) {
+				for (const i in LeekWars.weapons) {
+					if (LeekWars.weapons[i].area === this.value_int) {
 						items.push(LeekWars.weapons[i])
 					}
 				}

@@ -1,10 +1,18 @@
 <template lang="html">
 	<div class="version">
-		<img v-if="version.image" :src="'/image/mail/mail_' + version.version + '.png'" class="image">
+		<img v-if="version.image" :src="'/image/mail/mail_' + version.version + '.' + extension" class="image">
 		<div class="wrapper">
 			<div v-for="(changes, s) in sections" :key="s" class="section">
 				<h4 v-if="sections.length > 1" v-emojis :class="{first: s === 0}">{{ $t('changelog.title_' + s) }}</h4>
-				<div v-for="(change, c) in changes" :key="c" class="change" v-html="'➤ ' + change"></div>
+				<div v-for="(change, c) in changes" :key="c" class="change">
+					<span v-html="'➤ ' + change.text"></span>
+					<v-menu v-for="image in change.images" :key="image" :close-on-content-click="false" :width="280" offset-overflow :nudge-top="0" transition="none" :open-on-hover="true" :open-delay="200" offset-y>
+						<template v-slot:activator="{ on }">
+							<v-icon class="screenshot" v-on="on">mdi-tooltip-image-outline</v-icon>
+						</template>
+						<img class="image-menu" :src="'/image/changelog/' + image + '.png'">
+					</v-menu>
+				</div>
 			</div>
 			<router-link v-if="version.forum_topic" :to="'/forum/category-' + version.forum_category + '/topic-' + version.forum_topic">
 				<v-btn color="primary" class="button">➤ {{ $t('changelog.forum_topic') }}</v-btn>
@@ -15,7 +23,7 @@
 
 <script lang="ts">
 	import { LeekWars } from '@/model/leekwars'
-	import { Component, Prop, Vue } from 'vue-property-decorator'
+	import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
 
 	@Component({ name: 'changelog-version', i18n: {} })
 	export default class ChangelogVersion extends Vue {
@@ -23,7 +31,12 @@
 		changelog: any = null
 
 		created() {
-			import(/* webpackChunkName: "changelog-[request]" */ `json-loader!yaml-loader!@/component/changelog/changelog.${this.$i18n.locale}.yaml`).then((changelog) => {
+			this.update()
+		}
+
+		@Watch('$i18n.locale')
+		update() {
+import(/* webpackChunkName: "changelog-[request]" */ `json-loader!yaml-loader!@/component/changelog/changelog.${this.$i18n.locale}.yaml`).then((changelog) => {
 				this.changelog = changelog
 			})
 		}
@@ -49,7 +62,19 @@
 					changes.push(this.changes[key])
 				}
 			}
-			return changes.map((cat: any) => cat.map((c: any) => c.replace('# ', '').replace('#ai', '<span class="ai" title="' + this.$t('changelog.need_ai_change') + '">AI</span>')))
+			const regex = /#img_(\w+)/g
+			return changes.map((cat: any) => cat
+				.map((c: any) => {
+					return {
+						text: c.replace('# ', '').replace('#ai', '<span class="ai" title="' + this.$t('changelog.need_ai_change') + '">AI</span>').replace(regex, ''),
+						images: Array.from(c.matchAll(regex), (m: any) => m[1])
+					}
+				})
+			)
+		}
+
+		get extension() {
+			return this.version.version >= 220 ? 'jpg' : 'png'
 		}
 	}
 </script>
@@ -68,13 +93,31 @@
 			border-radius: 4px;
 			cursor: help;
 		}
+		.screenshot {
+			color: #5fad1b;
+			cursor: pointer;
+			padding: 0 4px;
+			border-radius: 4px;
+			font-size: 20px;
+			vertical-align: top;
+			display: inline-block;
+			&:hover {
+				color: black;
+				border-color: black;
+			}
+		}
+	}
+	.image-menu {
+		vertical-align: bottom;
+		max-width: 800px;
+		max-height: 600px;
 	}
 	.image {
 		width: 100%;
 		vertical-align: bottom;
 	}
 	.wrapper {
-		max-width: 800px;
+		max-width: 820px;
 		margin: 0 auto;
 		background: #f2f2f2;
 		padding: 15px;

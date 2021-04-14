@@ -9,6 +9,10 @@
 					<span>{{ $t('hide_unlocked') }}</span>
 					<v-switch :input-value="hide_unlocked" hide-details />
 				</div>
+				<div class="tab" @click="sort_by_rarity = !sort_by_rarity">
+					<span>{{ $t('sort_by_rarity') }}</span>
+					<v-switch :input-value="sort_by_rarity" hide-details />
+				</div>
 			</div>
 		</div>
 		<panel class="first">
@@ -32,7 +36,7 @@
 			</template>
 			<loader v-show="!loaded" slot="content" />
 			<div v-if="loaded" slot="content" class="trophies">
-				<div v-for="trophy in trophies[category.id]" :key="trophy.id" :class="{unlocked: trophy.unlocked, locked: !trophy.unlocked, card: trophy.unlocked}" class="trophy">
+				<div v-for="(trophy, t) in trophies[category.id]" :key="t" :class="{unlocked: trophy.unlocked, locked: !trophy.unlocked, card: trophy.unlocked}" class="trophy">
 					<div class="flex">
 						<img :src="'/image/trophy/big/' + trophy.code + '.png'" class="image">
 						<div class="info">
@@ -67,11 +71,12 @@
 </template>
 
 <script lang="ts">
+	import { mixins } from '@/model/i18n'
 	import { LeekWars } from '@/model/leekwars'
 	import { Component, Vue, Watch } from 'vue-property-decorator'
 	import Breadcrumb from '../forum/breadcrumb.vue'
 
-	@Component({ name: 'trophies', i18n: {}, components: { Breadcrumb } })
+	@Component({ name: 'trophies', i18n: {}, mixins, components: { Breadcrumb } })
 	export default class Trophies extends Vue {
 		raw_trophies: {[key: number]: any} = {}
 		progressions: {[key: number]: number} = {}
@@ -82,6 +87,7 @@
 		title: any = null
 		loaded: boolean = false
 		hide_unlocked: boolean = localStorage.getItem('options/hide-unlocked-trophies') === 'true'
+		sort_by_rarity: boolean = localStorage.getItem('options/sort-by-rarity-trophies') === 'true'
 		farmer_name: string = '...'
 		icons = [
 			'mdi-trophy-variant-outline',
@@ -104,6 +110,9 @@
 			const result: {[key: number]: any} = {}
 			for (const category in this.raw_trophies) {
 				result[category] = this.raw_trophies[category].filter((t: any) => (category !== '6' || t.unlocked) && (!this.hide_unlocked || !t.unlocked))
+				if (this.sort_by_rarity) {
+					result[category].sort((a: any, b: any) => a.rarity - b.rarity)
+				}
 			}
 			return result
 		}
@@ -161,6 +170,10 @@
 		@Watch('hide_unlocked')
 		public updateHideUnlocked() {
 			localStorage.setItem('options/hide-unlocked-trophies', this.hide_unlocked ? 'true' : 'false')
+		}
+		@Watch('sort_by_rarity')
+		public updateSort() {
+			localStorage.setItem('options/sort-by-rarity-trophies', this.sort_by_rarity ? 'true' : 'false')
 		}
 	}
 </script>

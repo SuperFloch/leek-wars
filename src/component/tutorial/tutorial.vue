@@ -141,6 +141,7 @@
 				<p>{{ $t('editor_8') }}
 					<ul>
 						<li v-html="$t('shortcut.shortcut_1')"></li>
+						<li v-html="$t('shortcut.shortcut_13')"></li>
 						<li v-html="$t('shortcut.shortcut_2')"></li>
 						<li v-html="$t('shortcut.shortcut_3')"></li>
 						<li v-html="$t('shortcut.shortcut_4')"></li>
@@ -910,6 +911,7 @@
 		created() {
 			LeekWars.setTitle(this.$t('title'))
 			window.addEventListener('scroll', this.scroll)
+			this.$root.$emit('loaded')
 		}
 		scroll(e: Event) {
 			if (window.scrollY + window.innerHeight + 300 > document.body.clientHeight) {

@@ -10,10 +10,10 @@
 					</div>
 					<v-menu v-model="fileMenu" :activator="LeekWars.mobile ? addMenuActivator : $refs.fileButton" offset-y>
 						<v-list>
-							<div v-if="currentFolder && currentFolder.id !== 0" class="menu-title">
+							<div v-if="currentFolder && currentFolder.id > 0" class="menu-title">
 								<v-icon>mdi-folder-outline</v-icon> {{ currentFolder.name }}
 							</div>
-							<v-list-item v-ripple @click="$refs.explorer.openNewAI(currentFolder)">
+							<v-list-item v-if="currentFolder && currentFolder.id !== -1" v-ripple @click="$refs.explorer.openNewAI(currentFolder)">
 								<v-icon class="list-icon">mdi-file-plus-outline</v-icon>
 								<v-list-item-content>
 									<v-list-item-title>{{ $t('new_ai') }}</v-list-item-title>
@@ -32,7 +32,7 @@
 									</v-list-item-title>
 								</v-list-item-content>
 							</v-list-item> -->
-							<v-list-item v-ripple @click="$refs.explorer.openNewFolder(currentFolder)">
+							<v-list-item v-if="currentFolder && currentFolder.id !== -1" v-ripple @click="$refs.explorer.openNewFolder(currentFolder)">
 								<v-icon class="list-icon">mdi-folder-plus-outline</v-icon>
 								<v-list-item-content>
 									<v-list-item-title>{{ $t('new_folder') }}</v-list-item-title>
@@ -41,7 +41,7 @@
 							<div v-if="currentAI" class="menu-title">
 								<v-icon>mdi-file-outline</v-icon> {{ currentAI.name }}
 							</div>
-							<v-list-item v-if="currentAI" v-ripple @click="save">
+							<v-list-item v-if="currentAI" v-ripple @click="save(currentEditor)">
 								<v-icon class="list-icon">mdi-content-save</v-icon>
 								<v-list-item-content>
 									<v-list-item-title>{{ $t('save') }}</v-list-item-title>
@@ -58,7 +58,7 @@
 					<div ref="settingsButton" class="tab action" icon="settings" @click="settingsDialog = true">
 						<v-icon>mdi-cogs</v-icon>
 					</div>
-					<div :title="$t('test_desc')" class="action content tab" icon="play_arrow" @click="test">
+					<div :title="$t('test_desc')" class="action content tab" icon="play_arrow" @click="test(currentEditor)">
 						<v-icon class="list-icon">mdi-play</v-icon><span>{{ $t('test') }}</span>
 					</div>
 				</div>
@@ -82,11 +82,6 @@
 							<div v-if="currentAI.included_lines !== 0" class="line-count-wrapper">{{ $tc('main.n_total_lines', currentEditor.lines + currentAI.included_lines) }}</div>
 							<div v-if="currentAI.included_chars !== 0" class="char-count-wrapper">{{ $tc('main.n_total_chars', currentEditor.characters + currentAI.included_chars) }}</div>
 						</div>
-						<br>
-						<!--
-						<div id='export-button' class="button" title="{export_desc}">▼ {{ $t('export') }}</div>
-						<div id='import-button' class="button" title="{import_desc}">▲ {{ $t('import') }}</div>
-						-->
 					</div>
 				</panel>
 			</div>
@@ -113,9 +108,45 @@
 
 						<div v-if="showProblemsDetails && problemsHeight && (LeekWars.analyzer.error_count || LeekWars.analyzer.warning_count || LeekWars.analyzer.todo_count)" :style="{height: problemsHeight + 'px'}">
 							<div class="problems-resizer" @mousedown="problemsResizerMousedown"></div>
-							<editor-problems />
+							<editor-problems @jump="jump" />
 						</div>
 						<div class="status">
+							<v-menu v-if="currentAI" top :offset-y="true" :nudge-top="1" :max-width="600">
+								<template v-slot:activator="{ on, attrs }">
+									<div v-ripple class="version" v-bind="attrs" v-on="on">
+										LeekScript {{ ("" + currentAI.version).split('').join('.') }}
+									</div>
+								</template>
+								<v-list :dense="true" class="version-menu">
+									<v-list-item v-ripple @click="setVersion(11)">
+										<v-icon v-if="currentAI.version === 11" class="list-icon">mdi-star</v-icon>
+										<v-icon v-else class="list-icon">mdi-star-outline</v-icon>
+										<v-list-item-content>
+											<v-list-item-title>LeekScript 1.1 <span class="green">Recommandé</span></v-list-item-title>
+											<v-list-item-subtitle>
+												<ul>
+													<li>Ajout des classes et objets.</li>
+													<li>Passage par référence par défaut pour les valeurs non-primitives dans les fonctions, les boucles foreach et les tableaux.</li>
+													<li>Corrections mineures (arrayFilter, opérateur ^=, et autres).</li>
+												</ul>
+											</v-list-item-subtitle>
+										</v-list-item-content>
+									</v-list-item>
+									<router-link class="link" to="/encyclopedia/LeekScript_1.1"><v-icon>mdi-book-open-page-variant</v-icon> Toutes les informations sur le LeekScript 1.1</router-link>
+									<v-list-item v-ripple @click="setVersion(10)">
+										<v-icon v-if="currentAI.version === 10" class="list-icon">mdi-star</v-icon>
+										<v-icon v-else class="list-icon">mdi-star-outline</v-icon>
+										<v-list-item-content>
+											<v-list-item-title>LeekScript 1.0</v-list-item-title>
+											<v-list-item-subtitle>
+												<ul>
+													<li>Version initiale</li>
+												</ul>
+											</v-list-item-subtitle>
+										</v-list-item-content>
+									</v-list-item>
+								</v-list>
+							</v-menu>
 							<div v-ripple class="problems" @click="toggleProblems">
 								<span v-if="LeekWars.analyzer.error_count + LeekWars.analyzer.warning_count + LeekWars.analyzer.todo_count === 0" class="no-error">
 									<v-icon>mdi-check-circle</v-icon> Aucun problème
@@ -183,6 +214,7 @@
 
 				<ul class="shortcuts">
 					<li v-html="$t('shortcut.shortcut_1')"></li>
+					<!-- <li v-html="$t('shortcut.shortcut_13')"></li> -->
 					<li v-html="$t('shortcut.shortcut_2')"></li>
 					<li v-html="$t('shortcut.shortcut_3')"></li>
 					<li v-html="$t('shortcut.shortcut_4')"></li>
@@ -288,9 +320,9 @@
 			{icon: 'mdi-cogs', click: () => this.settings() }
 		]
 		actions_content = [
-			{icon: 'mdi-content-save', click: () => this.save()},
+			{icon: 'mdi-content-save', click: () => this.save(this.currentEditor)},
 			{icon: 'mdi-delete', click: () => this.startDelete()},
-			{icon: 'mdi-play', click: () => this.test()},
+			{icon: 'mdi-play', click: () => this.test(this.currentEditor)},
 		]
 		get currentID() {
 			if (this.currentType === 'ai' && this.currentAI) { return this.currentAI.id }
@@ -341,7 +373,11 @@
 			LeekWars.footer = false
 			LeekWars.box = true
 			this.$root.$on('ctrlS', () => {
-				this.save()
+				this.save(this.currentEditor)
+			})
+			this.$root.$on('ctrlShiftS', () => {
+				// TODO save all but analyze only entrypoints
+				// this.saveAll()
 			})
 			this.$root.$on('ctrlQ', () => {
 				this.testDialog = true
@@ -440,7 +476,7 @@
 		update() {
 			if (this.$route.params.id) {
 				const id = parseInt(this.$route.params.id, 10)
-				if (id in fileSystem.ais) {
+				if (id > 0 && id in fileSystem.ais) {
 					const ai = fileSystem.ais[id]
 					this.currentAI = ai
 					this.currentType = 'ai'
@@ -474,11 +510,15 @@
 
 			} else if (!LeekWars.mobile) {
 				const lastCode = localStorage.getItem('editor/last_code')
-				if (lastCode && lastCode in fileSystem.ais) {
+				if (lastCode && parseInt(lastCode, 10) > 0 && lastCode in fileSystem.ais) {
 					this.$router.replace('/editor/' + localStorage.getItem('editor/last_code'))
-				} else if (LeekWars.objectSize(fileSystem.ais) > 0) {
-					this.$router.replace('/editor/' + LeekWars.firstKey(fileSystem.ais))
 				} else {
+					for (const ai in fileSystem.ais) {
+						if (parseInt(ai, 10) > 0) { // Not bot ai
+							this.$router.replace('/editor/' + ai)
+							return
+						}
+					}
 					this.$router.replace('/editor/0') // Go to root folder to be able to create a new AI
 				}
 			} else {
@@ -489,6 +529,7 @@
 
 		beforeDestroy() {
 			this.$root.$off('ctrlS')
+			this.$root.$off('ctrlShiftS')
 			this.$root.$off('ctrlQ')
 			this.$root.$off('ctrlF')
 			this.$root.$off('ctrlP')
@@ -518,97 +559,116 @@
 			}
 		}
 
-		save() {
-			if (!this.currentEditor) { return }
-			if (this.currentEditor.saving || !this.currentEditor.loaded) { return }
-			this.currentEditor.saving = true
-			this.currentEditor.ai.modified = false
-			this.currentEditor.serverError = false
+		save(aiEditor: AIView | null) {
+			if (!aiEditor) { return }
+			if (aiEditor.saving || !aiEditor.loaded) { return }
+			aiEditor.saving = true
+			aiEditor.ai.modified = false
+			aiEditor.serverError = false
 			this.errors = []
 
-			const saveID = this.currentEditor.id > 0 ? this.currentEditor.id : 0
-			const content = this.currentEditor.editor.getValue()
-			this.currentAI!.code = content
+			const saveID = aiEditor.id > 0 ? aiEditor.id : 0
+			const content = aiEditor.editor.getValue()
+			aiEditor.ai!.code = content
 
-			this.currentEditor.updateIncludes()
-			this.currentEditor.updateGlobalVars()
+			// this.currentEditor.updateIncludes()
+			// this.currentEditor.updateGlobalVars()
 
 			LeekWars.post('ai/save', {ai_id: saveID, code: content}).then(data => {
-				if (this.currentEditor === null) { return }
-				this.currentEditor.saving = false
-				if (this.currentEditor.ai.v2) {
-					//
-				} else {
-					if (!data.result || data.result.length === 0) {
-						this.currentEditor.serverError = true
-						return
-					}
-					this.errors = []
-					this.goods = []
-					LeekWars.analyzer.clearProblems(this.currentAI!)
-
-					for (const entrypoint in data.result) {
-						const entrypoint_id = parseInt(entrypoint, 10)
-						for (const res of data.result[entrypoint]) {
-							const code = res[0]
-							const ai = fileSystem.ais[res[1]]
-							const ai_name = ai ? ai.name : 'AI #' + res[1]
-							const editor = this.getAiView(ai)
-							if (code === 2) {
-								this.goods.push({ai})
-								ai.valid = true
-								if (editor) { editor.removeErrors(entrypoint_id) }
-								LeekWars.analyzer.setAIProblems(entrypoint_id, ai.path, [])
-							} else if (code === 1) {
-								this.errors.push({ai: ai_name, error: res[2], line: res[3]})
-								ai.valid = false
-							} else if (code === 0) {
-								const line = res[2]
-								let info = res[4]
-								if (res.length === 7) {
-									info = this.$t('leekscript.' + res[5], res[6])
-								} else {
-									info = this.$t('leekscript.' + res[5])
-								}
-								info = '(' + res[4] + ') ' + info
-								ai.valid = false
-
-								let problem = null
-								if (editor) {
-									const token = editor.editor.getTokenAt({line: line - 1, ch: res[3] - 1})
-									problem = [line, token.start, line, token.end - 1, 0, info]
-								} else {
-									problem = [line, 0, line, 12, 0, info]
-								}
-								const problems = [ problem ]
-								LeekWars.analyzer.setAIProblems(entrypoint_id, ai.path, problems)
-								this.problems(entrypoint_id, ai, problems)
-							}
-						}
-					}
-					LeekWars.analyzer.updateCount()
-					setTimeout(() => this.goods = [], 2000)
+				if (aiEditor === null) { return }
+				aiEditor.saving = false
+				if (!data.result || data.result.length === 0) {
+					aiEditor.serverError = true
+					return
 				}
-				if (this.currentEditor.needTest) {
-					this.currentEditor.needTest = false
-					if (this.currentEditor.ai.valid) {
-						this.test()
+				this.errors = []
+				this.goods = []
+				LeekWars.analyzer.clearProblems(aiEditor.ai!)
+
+				for (const entrypoint in data.result) {
+					const entrypoint_id = parseInt(entrypoint, 10)
+					const ai = fileSystem.ais[entrypoint_id]
+					const editor = this.getAiView(ai)
+					const problems = []
+					// Good
+					if (!data.result[entrypoint].length) {
+						this.goods.push({ai})
+						ai.valid = true
+						if (editor) { editor.removeErrors(entrypoint_id) }
+						LeekWars.analyzer.setAIProblems(entrypoint_id, ai.path, [])
+						continue
+					}
+					this.handleProblems(ai, data.result[entrypoint])
+				}
+				LeekWars.analyzer.updateCount()
+				setTimeout(() => this.goods = [], 2000)
+
+				if (aiEditor.needTest) {
+					aiEditor.needTest = false
+					if (aiEditor.ai.valid) {
+						this.test(aiEditor)
 					}
 				}
 			}).error(() => {
-				if (this.currentEditor === null) { return }
-				this.currentEditor.serverError = true
-				this.currentEditor.saving = false
+				if (aiEditor === null) { return }
+				aiEditor.serverError = true
+				aiEditor.saving = false
 			})
 		}
+
+		saveAll() {
+			for (const aiEditor of (this.$refs.editors as AIView[])) {
+				this.save(aiEditor)
+			}
+		}
+
+		handleProblems(entrypoint: AI, problems: any[]) {
+			// Group problems by ai
+			const problemsByAI = {} as {[key: number]: any[]}
+			for (const problem of problems) {
+				const level = problem[0]
+				const ai_id = problem[1]
+				if (!(ai_id in problemsByAI)) {
+					problemsByAI[ai_id] = []
+				}
+				const ai = fileSystem.ais[ai_id]
+				const ai_name = ai ? ai.name : 'AI #' + problem[1]
+				const editor = this.getAiView(ai)
+				const line = problem[2]
+				let info = problem[4]
+				if (problem.length === 7) {
+					info = this.$t('leekscript.error_' + problem[5], problem[6])
+				} else {
+					info = this.$t('leekscript.error_' + problem[5])
+				}
+				info = '(' + problem[4] + ') ' + info
+				ai.valid = false
+				let new_problem = null
+				if (editor) {
+					const token = editor.editor.getTokenAt({line: line - 1, ch: problem[3] - 1})
+					new_problem = [line, token.start, line, token.end - 1, level, info]
+				} else {
+					new_problem = [line, 0, line, 12, level, info]
+				}
+				problemsByAI[ai_id].push(new_problem)
+			}
+			for (const ai_id in problemsByAI) {
+				const ai = fileSystem.ais[ai_id]
+				const ai_problems = problemsByAI[ai_id]
+				// console.log("ai", ai.path, "problems", ai_problems)
+				LeekWars.analyzer.setAIProblems(entrypoint.id, ai.path, ai_problems)
+				this.problems(entrypoint.id, ai, ai_problems)
+			}
+		}
+
 		startDelete() {
 			(this.$refs.explorer as any).deleteDialog = true
 		}
-		test() {
-			if (!this.currentAI || !this.currentEditor) { return }
-			if (this.currentAI.modified) {
-				this.currentEditor.needTest = true
-				this.save()
+		test(aiEditor: AIView | null) {
+			if (!aiEditor || !aiEditor.ai) { return }
+			if (aiEditor.ai.modified) {
+				aiEditor.needTest = true
+				this.save(aiEditor)
 				return
 			}
 			this.testDialog = true
@@ -670,10 +730,6 @@
 				const editor = this.getAiView(ai)
 				if (editor) { editor.scrollToLine(line - 1) }
 			})
-		}
-		jumpProblem(path: string, problem: any) {
-			const ai = fileSystem.aiByFullPath[path]
-			this.jump(ai, problem[0])
 		}
 		load(ai: AI) {
 			if (!(ai.id in this.activeAIs)) {
@@ -748,11 +804,13 @@
 			(this.$refs.editorTest as any).onAIDeleted(ai.id)
 
 			// Open a new one
-			if (!LeekWars.isEmptyObj(fileSystem.ais)) {
-				this.$router.replace('/editor/' + LeekWars.firstKey(fileSystem.ais))
-			} else {
-				this.$router.replace('/editor')
+			for (const fai in fileSystem.ais) {
+				if (parseInt(fai, 10) > 0) { // Not bot ai
+					this.$router.replace('/editor/' + fai)
+					return
+				}
 			}
+			this.$router.replace('/editor')
 		}
 
 		close(ai: AI) {
@@ -767,6 +825,14 @@
 		updateHistory() {
 			localStorage.setItem('editor/history', JSON.stringify(this.history.map(ai => ai.id)))
 		}
+
+		setVersion(version: number) {
+			if (this.currentAI) {
+				this.currentAI.version = version
+				LeekWars.put('ai/version', {ai: this.currentAI.id, version})
+				this.save(this.currentEditor)
+			}
+		}
 	}
 </script>
 
@@ -779,11 +845,15 @@
 	.page-header {
 		flex-wrap: nowrap;
 		position: relative;
+		padding-right: 0;
 	}
 	.container {
 		flex: 1;
 		min-height: 0;
 		gap: 0;
+	}
+	#app.app .container {
+		margin-bottom: 0;
 	}
 	.menu {
 		flex-shrink: 0;
@@ -813,7 +883,6 @@
 		margin: 10px;
 		background-color: white;
 		font-size: 14px;
-		margin-bottom: -6px;
 		box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
 	}
 	#app.app .ai-stats {
@@ -988,17 +1057,26 @@
 	}
 
 	.problems-resizer {
-		height: 8px;
+		height: 10px;
 		cursor: ns-resize;
 		position: absolute;
 		left: 0;
 		right: 0;
+		z-index: 1;
 	}
 	.status {
 		flex: 0 0 36px;
 		display: flex;
 		align-items: center;
 		border-top: 1px solid #ddd;
+		.version {
+			line-height: 36px;
+			user-select: none;
+			cursor: pointer;
+			padding: 0 10px;
+			font-weight: 500;
+			color: #555;
+		}
 		.problems {
 			height: 100%;
 			line-height: 36px;
@@ -1067,6 +1145,38 @@
 		.v-icon {
 			font-size: 16px;
 			vertical-align: bottom;
+		}
+	}
+	.version-menu {
+		.v-list-item__subtitle {
+			white-space: initial;
+			font-weight: 400;
+			> ul {
+				padding-left: 20px;
+			}
+			ul {
+				margin: 4px 0;
+			}
+		}
+		.green {
+			background: #5fad1b;
+			color: white;
+			padding: 0 6px;
+			border-radius: 20px;
+		}
+		.link {
+			padding: 5px;
+			padding-left: 50px;
+			color: #5fad1b;
+			font-weight: 500;
+			display: block;
+			i {
+				font-size: 16px;
+				vertical-align: top;
+			}
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 </style>

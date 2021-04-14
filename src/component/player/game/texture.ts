@@ -14,7 +14,7 @@ class Texture {
 	private cache: {[key: number]: HTMLCanvasElement} = {}
 
 	constructor(path: string, buildShadow: boolean = false, quality: number = 1) {
-		this.path = path
+		this.path = path + '?0'
 		this.buildShadow = buildShadow
 		this.shadowQuality = quality
 	}
@@ -80,6 +80,7 @@ class T {
 	public static tp = new Texture(LeekWars.STATIC + 'image/charac/small/tp.png')
 	public static mp = new Texture(LeekWars.STATIC + 'image/charac/small/mp.png')
 	public static leek_hand = new Texture(LeekWars.STATIC + "image/fight/leek_hand.png", true, SHADOW_QUALITY)
+	public static leek_hand_gold = new Texture(LeekWars.STATIC + "image/fight/leek_hand_gold.png", true, SHADOW_QUALITY)
 	public static critical = new Texture(LeekWars.STATIC + "image/fight/critical.png", true, SHADOW_QUALITY)
 
 	// Armes
@@ -134,22 +135,36 @@ class T {
 	public static rifle_cartridge = new Texture(LeekWars.STATIC + 'image/weapon/rifle_cartridge.png')
 	public static rhino = new Texture(LeekWars.STATIC + 'image/weapon/rhino.png', true, SHADOW_QUALITY)
 	public static rhino_cartridge = new Texture(LeekWars.STATIC + 'image/weapon/rhino_cartridge.png')
+	public static explorer_rifle = new Texture(LeekWars.STATIC + 'image/weapon/explorer_rifle.png', true, SHADOW_QUALITY)
+	public static explorer_rifle_cartridge = new Texture(LeekWars.STATIC + 'image/weapon/explorer_rifle_cartridge.png')
+	public static fish = new Texture(LeekWars.STATIC + 'image/weapon/fish.png', true, SHADOW_QUALITY)
+	public static fish_cartridge = new Texture(LeekWars.STATIC + 'image/weapon/fish_cartridge.png')
+	public static bubble = new Texture(LeekWars.STATIC + 'image/weapon/bubble.png')
 
 	// Cartes
 	public static box = new Texture(LeekWars.STATIC + 'image/map/box.png', true, 1)
 	public static big_box = new Texture(LeekWars.STATIC + 'image/map/big_box.png', true, 1)
+	public static box_new = new Texture(LeekWars.STATIC + 'image/map/box_new.png', true, 1)
+	public static box_stack = new Texture(LeekWars.STATIC + 'image/map/box_stack.png', true, 1)
+	public static metal_box = new Texture(LeekWars.STATIC + 'image/map/metal_box.png', true, 1)
+	public static metal_box_stack = new Texture(LeekWars.STATIC + 'image/map/metal_box_stack.png', true, 1)
 	public static factory = new Texture(LeekWars.STATIC + 'image/map/factory_bg.png')
 	public static desert = new Texture(LeekWars.STATIC + 'image/map/desert.png')
+	public static desert_pattern = new Texture(LeekWars.STATIC + 'image/map/desert_pattern.png')
+	public static cracks = new Texture(LeekWars.STATIC + 'image/map/cracks.png')
 	public static desert_rock2_small = new Texture(LeekWars.STATIC + 'image/map/rock2_small.png', true, 1)
 	public static desert_grass = new Texture(LeekWars.STATIC + 'image/map/desert_grass.png', true, 1)
 	public static cactus = new Texture(LeekWars.STATIC + 'image/map/cactus.png', true, 1)
+	public static cactus_2 = new Texture(LeekWars.STATIC + 'image/map/cactus_2.png', true, 1)
 	public static desert_rock1_big = new Texture(LeekWars.STATIC + 'image/map/rock1_big.png', true, 1)
 	public static desert_rock2_big = new Texture(LeekWars.STATIC + 'image/map/rock2_big.png', true, 1)
 	public static desert_rock3_big = new Texture(LeekWars.STATIC + 'image/map/rock3_big.png', true, 1)
+	public static dead_tree = new Texture(LeekWars.STATIC + 'image/map/dead_tree.png', true, 1)
 	public static skull = new Texture(LeekWars.STATIC + 'image/map/skull.png')
 	public static forest = new Texture(LeekWars.STATIC + 'image/map/forest.png')
 	public static forest_rock = new Texture(LeekWars.STATIC + 'image/map/forest_rock.png', true, 1)
 	public static forest_rock_small = new Texture(LeekWars.STATIC + 'image/map/forest_rock_small.png', true, 1)
+	public static daisy = new Texture(LeekWars.STATIC + 'image/map/daisy.png', true, 1)
 	public static stump = new Texture(LeekWars.STATIC + 'image/map/stump.png', true, 1)
 	public static fern = new Texture(LeekWars.STATIC + 'image/map/fern.png', true, 1)
 	public static leaf = new Texture(LeekWars.STATIC + 'image/map/leaf.png')
@@ -159,17 +174,24 @@ class T {
 	public static mushroom = new Texture(LeekWars.STATIC + 'image/map/mushroom.png', true, 1)
 	public static glacier = new Texture(LeekWars.STATIC + 'image/map/glacier.png')
 	public static beach = new Texture(LeekWars.STATIC + 'image/map/beach.png')
+	public static water = new Texture(LeekWars.STATIC + 'image/map/water.png')
+	public static ball = new Texture(LeekWars.STATIC + 'image/map/ball.png', true, 1)
 	public static starfish = new Texture(LeekWars.STATIC + 'image/map/starfish.png', false, 0)
-	public static starfish2 = new Texture(LeekWars.STATIC + 'image/map/starfish2.png', false, 0)
+	public static beach_grass = new Texture(LeekWars.STATIC + 'image/map/beach_grass.png')
 	public static palm = new Texture(LeekWars.STATIC + 'image/map/palm.png', true, 1)
 	public static pebble = new Texture(LeekWars.STATIC + 'image/map/pebble.png', true, 1)
-	public static pebble_small = new Texture(LeekWars.STATIC + 'image/map/pebble_small.png')
+	public static pebble_small = new Texture(LeekWars.STATIC + 'image/map/pebble_small.png', true, 1)
 	public static snowman = new Texture(LeekWars.STATIC + 'image/map/snowman.png', true, 1)
 	public static fir = new Texture(LeekWars.STATIC + 'image/map/fir.png', true, 1)
 	public static ice = new Texture(LeekWars.STATIC + 'image/map/ice.png', true, 1)
 	public static ice_small = new Texture(LeekWars.STATIC + 'image/map/ice_small.png', true, 1)
+	public static snow_ball = new Texture(LeekWars.STATIC + 'image/map/snow_ball.png', true, 1)
+	public static rock_snow = new Texture(LeekWars.STATIC + 'image/map/rock_snow.png', true, 1)
+	public static snowflake = new Texture(LeekWars.STATIC + 'image/map/snowflake.png', true, 1)
+	public static bush_snow = new Texture(LeekWars.STATIC + 'image/map/bush_snow.png', true, 1)
 	public static barrel = new Texture(LeekWars.STATIC + 'image/map/barrel.png', true, 1)
-	public static cone = new Texture(LeekWars.STATIC + 'image/map/cone.png', true, 1)
+	public static cone = new Texture(LeekWars.STATIC + 'image/map/factory_cone.png', true, 1)
+	public static cone_yellow = new Texture(LeekWars.STATIC + 'image/map/factory_cone_yellow.png', true, 1)
 	public static cone_big = new Texture(LeekWars.STATIC + 'image/map/cone_big.png', true, 1)
 	public static fire = new Texture(LeekWars.STATIC + 'image/weapon/fire.png')
 	public static gaz = new Texture(LeekWars.STATIC + 'image/weapon/gaz.png')
@@ -194,6 +216,7 @@ class T {
 	public static red_circle = new Texture(LeekWars.STATIC + 'image/fight/red_circle.png')
 	public static daemon_shadow = new Texture(LeekWars.STATIC + 'image/fight/daemon_shadow.png')
 	public static arena = new Texture(LeekWars.STATIC + 'image/map/arena.png')
+	public static arena_pattern = new Texture(LeekWars.STATIC + 'image/map/arena_pattern.png')
 	public static pyramid = new Texture(LeekWars.STATIC + 'image/map/pyramid.png', true, 1)
 	public static grass = new Texture(LeekWars.STATIC + 'image/map/grass.png', true, 1)
 	public static pillar = new Texture(LeekWars.STATIC + 'image/map/pillar.png', true, 1)
@@ -213,7 +236,11 @@ class T {
 	public static arrows = new Texture(LeekWars.STATIC + 'image/map/arrows.png')
 	public static forest_flower = new Texture(LeekWars.STATIC + 'image/map/forest_flower.png', true, 1)
 	public static factory_bolt = new Texture(LeekWars.STATIC + 'image/map/factory_bolt.png', true, 1)
+	public static factory_wrench = new Texture(LeekWars.STATIC + 'image/map/wrench.png', true, 1)
+	public static pipes = new Texture(LeekWars.STATIC + 'image/map/pipes.png', true, 1)
 	public static forest_branch = new Texture(LeekWars.STATIC + 'image/map/forest_branch.png')
+	public static forest_branch_2 = new Texture(LeekWars.STATIC + 'image/map/forest_branch_2.png')
+	public static ray = new Texture(LeekWars.STATIC + 'image/fight/ray.png')
 
 	// Chips
 	public static cure_aureol = new Texture(LeekWars.STATIC + 'image/fight/cure_aureol.png')
@@ -222,16 +249,27 @@ class T {
 	public static halo = new Texture(LeekWars.STATIC + 'image/fight/halo.png')
 	public static halo_green = new Texture(LeekWars.STATIC + 'image/fight/halo_green.png')
 	public static heal_cross = new Texture(LeekWars.STATIC + 'image/fight/heal_cross.png')
+	public static nova_particle = new Texture(LeekWars.STATIC + 'image/fight/nova_particle.png')
 	public static liberation_halo = new Texture(LeekWars.STATIC + 'image/fight/liberation.png')
 	public static antidote_halo = new Texture(LeekWars.STATIC + 'image/fight/antidote.png')
+	public static manumission_halo = new Texture(LeekWars.STATIC + 'image/fight/manumission.png')
 	public static poison_aureol = new Texture(LeekWars.STATIC + 'image/fight/poison_aureol.png')
 	public static shackle_aureol = new Texture(LeekWars.STATIC + 'image/fight/shackle_aureol.png')
 	public static damage_return_aureol = new Texture(LeekWars.STATIC + 'image/fight/damage_return_aureol.png')
+	public static nova_aureol = new Texture(LeekWars.STATIC + 'image/fight/nova_aureol.png')
 	public static chip_burning = new Texture(LeekWars.STATIC + 'image/chip/glyph/burning.png')
-	public static spike1 = new Texture(LeekWars.STATIC + 'image/fight/spike1.png', true, 1)
-	public static spike2 = new Texture(LeekWars.STATIC + 'image/fight/spike2.png', true, 1)
-	public static plasma = new Texture(LeekWars.STATIC + 'image/fight/plasma.png', true, 1)
-	public static alteration = new Texture(LeekWars.STATIC + 'image/fight/alteration.png', true, 1)
+	public static spike1 = new Texture(LeekWars.STATIC + 'image/fight/spike1.png')
+	public static spike2 = new Texture(LeekWars.STATIC + 'image/fight/spike2.png')
+	public static plasma = new Texture(LeekWars.STATIC + 'image/fight/plasma.png')
+	public static alteration = new Texture(LeekWars.STATIC + 'image/fight/alteration.png')
+	public static glove = new Texture(LeekWars.STATIC + 'image/fight/glove.png')
+	public static glove_back = new Texture(LeekWars.STATIC + 'image/fight/glove_back.png')
+	public static chain = new Texture(LeekWars.STATIC + 'image/fight/chain.png')
+	public static chain_back = new Texture(LeekWars.STATIC + 'image/fight/chain_back.png')
+	public static grapple_1 = new Texture(LeekWars.STATIC + 'image/fight/grapple_1.png')
+	public static grapple_2 = new Texture(LeekWars.STATIC + 'image/fight/grapple_2.png')
+	public static grapple_back_1 = new Texture(LeekWars.STATIC + 'image/fight/grapple_back_1.png')
+	public static grapple_back_2 = new Texture(LeekWars.STATIC + 'image/fight/grapple_back_2.png')
 
 	// Buff
 	public static chip_steroid = new Texture(LeekWars.STATIC + 'image/chip/glyph/steroid.png')
@@ -255,6 +293,8 @@ class T {
 	public static chip_precipitation = new Texture(LeekWars.STATIC + 'image/chip/glyph/precipitation.png')
 	public static chip_covetousness = new Texture(LeekWars.STATIC + 'image/chip/glyph/covetousness.png')
 	public static chip_vampirization = new Texture(LeekWars.STATIC + 'image/chip/glyph/vampirization.png')
+	public static chip_knowledge = new Texture(LeekWars.STATIC + 'image/chip/glyph/knowledge.png')
+	public static chip_wizardry = new Texture(LeekWars.STATIC + 'image/chip/glyph/wizardry.png')
 
 	// Shield
 	public static chip_helmet = new Texture(LeekWars.STATIC + 'image/chip/glyph/helmet.png')
@@ -264,6 +304,7 @@ class T {
 	public static chip_fortress = new Texture(LeekWars.STATIC + 'image/chip/glyph/fortress.png')
 	public static chip_rampart = new Texture(LeekWars.STATIC + 'image/chip/glyph/rampart.png')
 	public static chip_carapace = new Texture(LeekWars.STATIC + 'image/chip/glyph/carapace.png')
+	public static chip_dome = new Texture(LeekWars.STATIC + 'image/chip/glyph/dome.png')
 
 	// Heal
 	public static chip_bandage = new Texture(LeekWars.STATIC + 'image/chip/glyph/bandage.png')
@@ -273,17 +314,23 @@ class T {
 	public static chip_drip = new Texture(LeekWars.STATIC + 'image/chip/glyph/drip.png')
 	public static chip_armoring = new Texture(LeekWars.STATIC + 'image/chip/glyph/armoring.png')
 	public static chip_remission = new Texture(LeekWars.STATIC + 'image/chip/glyph/remission.png')
+	public static chip_therapy = new Texture(LeekWars.STATIC + 'image/chip/glyph/therapy.png')
+	public static chip_serum = new Texture(LeekWars.STATIC + 'image/chip/glyph/serum.png')
 	public static chip_loam = new Texture(LeekWars.STATIC + 'image/chip/glyph/loam.png')
 	public static chip_fertilizer = new Texture(LeekWars.STATIC + 'image/chip/glyph/fertilizer.png')
+	public static chip_elevation = new Texture(LeekWars.STATIC + 'image/chip/glyph/elevation.png')
 
 	// Damage return
 	public static chip_thorn = new Texture(LeekWars.STATIC + 'image/chip/glyph/thorn.png')
 	public static chip_mirror = new Texture(LeekWars.STATIC + 'image/chip/glyph/mirror.png')
+	public static chip_bramble = new Texture(LeekWars.STATIC + 'image/chip/glyph/bramble.png')
 
 	// Poison
 	public static chip_venom = new Texture(LeekWars.STATIC + 'image/chip/glyph/venom.png')
 	public static chip_toxin = new Texture(LeekWars.STATIC + 'image/chip/glyph/toxin.png')
 	public static chip_plague = new Texture(LeekWars.STATIC + 'image/chip/glyph/plague.png')
+	public static chip_covid = new Texture(LeekWars.STATIC + 'image/chip/glyph/covid.png')
+	public static chip_arsenic = new Texture(LeekWars.STATIC + 'image/chip/glyph/arsenic.png')
 
 	// Shackles
 	public static chip_slow_down = new Texture(LeekWars.STATIC + 'image/chip/glyph/slow_down.png')
@@ -291,6 +338,12 @@ class T {
 	public static chip_tranquilizer = new Texture(LeekWars.STATIC + 'image/chip/glyph/tranquilizer.png')
 	public static chip_soporific = new Texture(LeekWars.STATIC + 'image/chip/glyph/soporific.png')
 	public static chip_fracture = new Texture(LeekWars.STATIC + 'image/chip/glyph/fracture.png')
+	public static chip_brainwashing = new Texture(LeekWars.STATIC + 'image/chip/glyph/brainwashing.png')
+	public static chip_crushing = new Texture(LeekWars.STATIC + 'image/chip/glyph/crushing.png')
+
+	// Nova
+	public static chip_mutation = new Texture(LeekWars.STATIC + 'image/chip/glyph/mutation.png')
+	public static chip_transmutation = new Texture(LeekWars.STATIC + 'image/chip/glyph/transmutation.png')
 
 	// Lama
 	public static lama = new Texture(LeekWars.STATIC + 'image/fight/lama_big.png')

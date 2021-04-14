@@ -46,9 +46,29 @@
 								</div>
 							</rich-tooltip-farmer>
 						</router-link>
+						<router-link v-if="fight.type === FightType.TEAM" :to="'/team/' + fight.team1.id">
+							<rich-tooltip-team :id="fight.team1.id" v-slot="{ on: rich }">
+								<div class="farmer" v-on="rich">
+									<emblem :team="fight.team1" /><br>
+									<span class="name">
+										{{ fight.team1.name }}
+									</span>
+								</div>
+							</rich-tooltip-team>
+						</router-link>
 					</td>
 					<td class="versus">VS</td>
 					<td>
+						<router-link v-if="fight.type === FightType.TEAM" :to="'/team/' + fight.team2.id">
+							<rich-tooltip-team :id="fight.team2.id" v-slot="{ on: rich }">
+								<div class="farmer" v-on="rich">
+									<emblem :team="fight.team2" /><br>
+									<span class="name">
+										{{ fight.team2.name }}
+									</span>
+								</div>
+							</rich-tooltip-team>
+						</router-link>
 						<router-link v-for="farmer in fight.farmers2" :key="farmer.id" :event="farmer.id > 0 ? 'click' : ''" :to="'/farmer/' + farmer.id">
 							<rich-tooltip-farmer :id="farmer.id" v-slot="{ on: rich }">
 								<div class="farmer" v-on="rich">
@@ -100,6 +120,7 @@
 	import { LeekWars } from '@/model/leekwars'
 	import { Warning } from '@/model/moderation'
 	import { Component, Vue, Watch } from 'vue-property-decorator'
+	import { GROUND_PADDING_BOTTOM, GROUND_PADDING_LEFT, GROUND_PADDING_RIGHT, GROUND_PADDING_TOP } from '../player/game/ground'
 	const Player = () => import(/* webpackChunkName: "[request]" */ `@/component/player/player.${locale}.i18n`)
 
 	@Component({ name: "fight", components: {
@@ -144,17 +165,32 @@
 
 		resize() {
 			Vue.nextTick(() => {
-				const RATIO = 1.7
 				const reference = document.querySelector('.app-center') as HTMLElement
 				const offset = 40 + 24
+				const controls = 36
 				if (reference) {
-					if (!LeekWars.mobile) {
-						const height = Math.min(window.innerHeight - 128, Math.round((reference.offsetWidth - offset) / RATIO))
-						this.playerWidth = Math.round(height * RATIO)
-						this.playerHeight = height
+					if (LeekWars.mobile) {
+						if (window.innerWidth > window.innerHeight) {
+							// Landscape
+							const height = Math.min(window.innerHeight - 56, Math.round(reference.offsetWidth / 2))
+							const padding_top = (height - controls - GROUND_PADDING_BOTTOM) * GROUND_PADDING_TOP
+							this.playerWidth = Math.round((height - controls - GROUND_PADDING_BOTTOM - padding_top) * 2)
+							this.playerHeight = height
+						} else {
+							// Portrait
+							const ratio = 1.3
+							const width = Math.min(reference.offsetWidth, Math.round((window.innerHeight - 56) * ratio))
+							this.playerWidth = width
+							this.playerHeight = Math.round(width / ratio)
+						}
 					} else {
-						const height = Math.min(window.innerHeight - 56, Math.round((reference.offsetWidth) / RATIO))
-						this.playerWidth = Math.round(height * RATIO)
+						// Desktop
+						const maxWidth = reference.offsetWidth - offset
+						const theoricalHeight1 = (maxWidth - GROUND_PADDING_RIGHT - GROUND_PADDING_LEFT) / 2
+						const padding_top = theoricalHeight1 / (1 - GROUND_PADDING_TOP) - theoricalHeight1
+						const theoricalHeight = Math.round(theoricalHeight1 + GROUND_PADDING_BOTTOM + padding_top + controls)
+						const height = Math.min(window.innerHeight - 128, theoricalHeight)
+						this.playerWidth = maxWidth
 						this.playerHeight = height
 					}
 				}
@@ -241,11 +277,11 @@
 		display: inline-block;
 		text-align: center;
 		color: #eee;
-		margin-top: 8px;
-		margin-bottom: 16px;
+		margin-bottom: 10px;
 		margin-left: 5px;
 		margin-right: 5px;
 		font-size: 13px;
+		cursor: pointer;
 	}
 	.fight-info .farmer .name {
 		max-width: 75px;

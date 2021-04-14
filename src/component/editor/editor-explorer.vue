@@ -1,6 +1,8 @@
 <template lang="html">
 	<div class="explorer">
-		<editor-folder :folder="fileSystem.rootFolder" :level="0" @menu="openMenu" />
+		<editor-folder :folder="fileSystem.rootFolder" :level="0" />
+
+		<editor-folder :folder="fileSystem.bin" :level="0" />
 
 		<v-menu offset-y absolute :position-x="x" :position-y="y" :value="aiMenu">
 			<div v-if="ai" class="title">{{ ai.name }}</div>
@@ -11,25 +13,37 @@
 						<v-list-item-title>{{ $t('open') }}</v-list-item-title>
 					</v-list-item-content>
 				</v-list-item>
-				<v-list-item v-ripple @click="$emit('test')">
+				<v-list-item v-if="ai && ai.folder !== -1" v-ripple @click="$emit('test')">
 					<v-icon>mdi-play</v-icon>
 					<v-list-item-content>
 						<v-list-item-title>{{ $t('test') }}</v-list-item-title>
 					</v-list-item-content>
 				</v-list-item>
-				<v-list-item v-ripple @click="renameStart">
+				<v-list-item v-if="ai && ai.folder !== -1" v-ripple @click="renameStart">
 					<v-icon>mdi-pencil</v-icon>
 					<v-list-item-content>
 						<v-list-item-title>{{ $t('rename') }}</v-list-item-title>
 					</v-list-item-content>
 				</v-list-item>
-				<v-list-item v-ripple @click="deleteDialog = true">
+				<v-list-item v-if="ai && ai.folder !== -1" v-ripple @click="deleteDialog = true">
 					<v-icon>mdi-delete</v-icon>
 					<v-list-item-content>
 						<v-list-item-title>{{ $t('delete') }}</v-list-item-title>
 					</v-list-item-content>
 				</v-list-item>
-				<template v-if="ai && ai.includes.length">
+				<v-list-item v-if="ai && ai.folder === -1" v-ripple @click="destroyDialog = true">
+					<v-icon>mdi-delete-forever</v-icon>
+					<v-list-item-content>
+						<v-list-item-title>{{ $t('destroy') }}</v-list-item-title>
+					</v-list-item-content>
+				</v-list-item>
+				<v-list-item v-if="ai && ai.folder === -1" v-ripple @click="restoreAI">
+					<v-icon>mdi-file-restore</v-icon>
+					<v-list-item-content>
+						<v-list-item-title>{{ $t('restore') }}</v-list-item-title>
+					</v-list-item-content>
+				</v-list-item>
+				<template v-if="ai && ai.includes && ai.includes.length">
 					<v-menu offset-x open-on-hover>
 						<template v-slot:activator="{ on, attrs }">
 							<v-list-item v-ripple v-bind="attrs" v-on="on">
@@ -97,6 +111,18 @@
 			</v-list>
 		</v-menu>
 
+		<v-menu offset-y absolute :position-x="x" :position-y="y" :value="binMenu">
+			<div v-if="folder" class="title">{{ $t(folder.name) }}</div>
+			<v-list class="menu" :dense="true">
+				<v-list-item v-ripple @click="emptyDialog = true">
+					<v-icon>mdi-delete-forever</v-icon>
+					<v-list-item-content>
+						<v-list-item-title>{{ $t('empty_bin') }}</v-list-item-title>
+					</v-list-item-content>
+				</v-list-item>
+			</v-list>
+		</v-menu>
+
 		<popup v-model="renameDialog" :width="500">
 			<v-icon slot="icon">mdi-pencil</v-icon>
 			<span slot="title">{{ $t('rename') }}</span>
@@ -104,8 +130,8 @@
 				<input ref="nameInput" v-model="newName" type="text" class="input dialog-input" @keyup.enter="rename()">
 			</div>
 			<div slot="actions">
-				<div @click="renameDialog = false">{{ $t('main.cancel') }}</div>
-				<div class="green" @click="rename()">{{ $t('rename') }}</div>
+				<div v-ripple @click="renameDialog = false">{{ $t('main.cancel') }}</div>
+				<div v-ripple class="green" @click="rename()">{{ $t('rename') }}</div>
 			</div>
 		</popup>
 
@@ -115,8 +141,28 @@
 			<span v-else-if="folder" slot="title">{{ $t('delete_folder', [folder.name]) }}</span>
 			{{ $t('delete_warning') }}
 			<div slot="actions">
-				<div @click="deleteDialog = false">{{ $t('delete_cancel') }}</div>
-				<div class="red" @click="deleteItem">{{ $t('delete_validate') }}</div>
+				<div v-ripple @click="deleteDialog = false">{{ $t('delete_cancel') }}</div>
+				<div v-ripple class="red" @click="deleteItem">{{ $t('delete_validate') }}</div>
+			</div>
+		</popup>
+
+		<popup v-model="destroyDialog" :width="500">
+			<v-icon slot="icon">mdi-delete-forever</v-icon>
+			<span v-if="ai" slot="title">{{ $t('destroy_ai', [ai.name]) }}</span>
+			{{ $t('destroy_warning') }}
+			<div slot="actions">
+				<div v-ripple @click="destroyDialog = false">{{ $t('delete_cancel') }}</div>
+				<div v-ripple class="red" @click="destroyAI">{{ $t('destroy_validate') }}</div>
+			</div>
+		</popup>
+
+		<popup v-model="emptyDialog" :width="500">
+			<v-icon slot="icon">mdi-delete</v-icon>
+			<span slot="title">{{ $t('empty_bin') }}</span>
+			{{ $t('empty_warning') }}
+			<div slot="actions">
+				<div v-ripple @click="emptyDialog = false">{{ $t('delete_cancel') }}</div>
+				<div v-ripple class="red" @click="emptyBin">{{ $t('empty_bin') }}</div>
 			</div>
 		</popup>
 
@@ -127,8 +173,8 @@
 				<input ref="newAIInput" v-model="newAIName" :placeholder="$t('ai_name')" type="text" class="input dialog-input" @keyup.enter="newAI(false, newAIName)">
 			</div>
 			<div slot="actions">
-				<div @click="newAIDialog = false">{{ $t('main.cancel') }}</div>
-				<div class="green" @click="newAI(false, newAIName)">{{ $t('main.create') }}</div>
+				<div v-ripple @click="newAIDialog = false">{{ $t('main.cancel') }}</div>
+				<div v-ripple class="green" @click="newAI(false, newAIName)">{{ $t('main.create') }}</div>
 			</div>
 		</popup>
 
@@ -139,8 +185,8 @@
 				<input ref="newFolderInput" v-model="newFolderName" :placeholder="$t('folder_name')" type="text" class="input dialog-input" @keyup.enter="newFolder(newFolderName)">
 			</div>
 			<div slot="actions">
-				<div @click="newFolderDialog = false">{{ $t('main.cancel') }}</div>
-				<div class="green" @click="newFolder(newFolderName)">{{ $t('main.create') }}</div>
+				<div v-ripple @click="newFolderDialog = false">{{ $t('main.cancel') }}</div>
+				<div v-ripple class="green" @click="newFolder(newFolderName)">{{ $t('main.create') }}</div>
 			</div>
 		</popup>
 	</div>
@@ -162,6 +208,7 @@
 		fileSystem = fileSystem
 		aiMenu: boolean = false
 		folderMenu: boolean = false
+		binMenu: boolean = false
 		x: number = 0
 		y: number = 0
 		ai: AI | null = null
@@ -169,6 +216,8 @@
 		renameDialog: boolean = false
 		newName: string = ''
 		deleteDialog: boolean = false
+		destroyDialog: boolean = false
+		emptyDialog: boolean = false
 		newAIName: string = ''
 		newAIDialog: boolean = false
 		newFolderDialog: boolean = false
@@ -189,7 +238,7 @@
 
 		openMenu(item: AI | Folder, ai: boolean, e: any) {
 			e.preventDefault()
-			this.aiMenu = this.folderMenu = false
+			this.aiMenu = this.folderMenu = this.binMenu = false
 			this.x = e.clientX
 			this.y = e.clientY
 			if (ai) {
@@ -199,7 +248,12 @@
 			} else {
 				this.folder = item as Folder
 				this.ai = null
-				this.$nextTick(() => this.folderMenu = true)
+				console.log("folder", this.folder)
+				if (this.folder.id === -1) {
+					this.$nextTick(() => this.binMenu = true)
+				} else {
+					this.$nextTick(() => this.folderMenu = true)
+				}
 			}
 		}
 
@@ -252,6 +306,25 @@
 			this.deleteDialog = true
 		}
 
+		destroyAI() {
+			if (this.ai) {
+				fileSystem.destroyAI(this.ai)
+				// this.$emit('delete-ai', this.ai)
+				this.destroyDialog = false
+			}
+		}
+
+		emptyBin() {
+			fileSystem.emptyBin()
+			this.emptyDialog = false
+		}
+
+		restoreAI() {
+			if (this.ai) {
+				fileSystem.restore(this.ai)
+			}
+		}
+
 		openNewAI(folder: Folder) {
 			this.folder = folder
 			this.newAIStart()
@@ -262,10 +335,10 @@
 		}
 		newAI(v2: boolean, name: string) {
 			if (!this.folder) { return }
-			LeekWars.post('ai/new-name', {folder_id: this.folder.id, v2, name}).then(data => {
+			LeekWars.post('ai/new-name', {folder_id: this.folder.id, version: 11, name}).then(data => {
 				const ai = new AI(data.ai)
 				ai.valid = true
-				ai.v2 = v2
+				ai.version = 11
 				ai.total_chars = ai.code.length
 				ai.total_lines = ai.code.split("\n").length
 				fileSystem.add_ai(ai, this.folder!)
@@ -311,13 +384,13 @@
 		}
 
 		downloadSimple() {
-			this.download(this.ai!.name, this.ai!.code)
+			this.download(this.ai!.name, "/** " + this.ai!.path + " **/\n\n" + this.ai!.code)
 		}
 
 		downloadIncludes() {
 			if (!this.ai) { return }
 
-			const regex = /include\s*\(\s*["'](.*?)["']\s*\)\s*;/gm
+			const regex = /include\s*\(\s*["'](.*?)["']\s*\)\s*;?/gm
 			const included_ais = new Set<AI>()
 			const fun = (ai: AI): string => "/** " + ai.path + " **/\n\n" + ai.code.replace(regex, (a, path) => {
 				const included = fileSystem.find(path, ai.folder)
@@ -334,11 +407,12 @@
 		}
 
 		download(filename: string, text: string) {
+			const data = "/** Exporté le " + new Date().toLocaleString() + " **/\n\n" + text
 			if (!filename.includes(".")) {
 				filename += ".leek"
 			}
 			const element = document.createElement('a')
-			element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
+			element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(data))
 			element.setAttribute('download', filename)
 			element.style.display = 'none'
 			document.body.appendChild(element)
@@ -351,6 +425,8 @@
 <style lang="scss" scoped>
 .explorer {
 	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
 .title {
 	padding: 5px 10px;

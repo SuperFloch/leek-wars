@@ -35,7 +35,9 @@
 					<h4>➤ Queue ({{ queue.length }})</h4>
 					<div class="farmers">
 						<div v-for="(fight, f) in queue" :key="f" class="card farmer">
-							<avatar :farmer="{id: fight[0], avatar_changed: 1}" /> {{ fight[0] }}
+							<router-link :to="'/farmer/' + fight[0]">
+								<avatar :farmer="{id: fight[0], avatar_changed: 1}" /> {{ fight[0] }}
+							</router-link>
 							<div class="fight">
 								<router-link :to="'/fight/' + fight[1]">{{ fight[1] }}</router-link>
 							</div>
@@ -127,7 +129,6 @@
 		display: inline-block;
 		text-align: center;
 		vertical-align: top;
-		width: 420px;
 	}
 	.server .load {
 		position: absolute;

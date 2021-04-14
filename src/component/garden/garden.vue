@@ -3,17 +3,10 @@
 		<div class="page-header page-bar">
 			<h1>{{ $t('title') }}</h1>
 			<div v-if="garden" class="tabs">
-				<tooltip>
-					<template v-slot:activator="{ on }">
-						<div class="tab action hidden" v-on="on">
-							<img src="/image/icon/garden.png">
-							<span v-if="garden.fights > 0">{{ garden.fights }}</span>
-							<span v-else>{{ remainingTime }}</span>
-						</div>
-					</template>
-					<span v-if="garden.fights > 0">{{ $t('n_remaining_fights', [garden.fights]) }}</span>
-					<span v-else>{{ $t('next_fight_in', [remainingTime]) }}</span>
-				</tooltip>
+				<div class="tab action hidden disabled">
+					<img src="/image/icon/garden.png">
+					<span>{{ garden.fights }}</span>
+				</div>
 			</div>
 		</div>
 		<div class="container last">
@@ -93,7 +86,7 @@
 									<garden-leek :leek="challengeLeekTarget" />
 								</div>
 							</div>
-							<div v-else>
+							<div v-else class="nofight">
 								<img src="/image/notgood.png">
 								<h4>{{ $t('no_more_fights') }}</h4>
 							</div>
@@ -154,10 +147,7 @@
 									<h4>{{ $t(leekErrors[selectedLeek.id]) }}</h4>
 								</div>
 							</div>
-							<div v-else>
-								<img src="/image/notgood.png"><br>
-								<h4>{{ $t('no_more_fights') }}</h4>
-							</div>
+							<garden-no-fights v-else />
 						</div>
 						<div v-if="category == 'farmer'">
 							<span v-ripple class="my-farmer farmer">
@@ -177,18 +167,15 @@
 									</div>
 								</div>
 							</div>
-							<div v-else>
-								<img src="/image/notgood.png"><br>
-								<h4>{{ $t('no_more_fights') }}</h4>
-							</div>
+							<garden-no-fights v-else />
 						</div>
 						<div v-if="category == 'team'">
 							<div class="info"><v-icon>mdi-arrow-down</v-icon> {{ $t('select_compo') }}</div>
 							<router-link v-for="composition in garden.my_compositions" :key="composition.id" v-ripple :to="'/garden/team/' + composition.id" class="composition-wrapper my-composition">
 								<garden-compo :compo="composition" />
-								<span class="fights">
+								<div class="fights">
 									<img class="sword" src="/image/icon/grey/garden.png">{{ composition.fights }}
-								</span>
+								</div>
 							</router-link>
 							<div class="versus">VS</div>
 							<div v-if="selectedComposition">
@@ -199,7 +186,9 @@
 								</div>
 								<loader v-else-if="!teamOpponents[selectedComposition.id]" />
 								<div v-else class="opponents">
-									<garden-compo v-for="compo in teamOpponents[selectedComposition.id]" :key="compo.id" v-ripple :compo="compo" class="composition-wrapper" @click.native="clickCompositionOpponent(compo)" />
+									<span v-for="compo in teamOpponents[selectedComposition.id]" :key="compo.id" v-ripple class="composition-wrapper" @click="clickCompositionOpponent(compo)">
+										<garden-compo :compo="compo" />
+									</span>
 									<div v-if="!teamOpponents[selectedComposition.id].length">
 										<img src="/image/notgood.png">
 										<h4>{{ $t('no_opponent_of_your_size') }}</h4>
@@ -220,10 +209,7 @@
 								</tooltip>
 								<br><br>
 								<v-btn v-if="garden.fights" color="primary" @click="battleRoyaleRegister">Sélectionner</v-btn>
-								<div v-else>
-									<img src="/image/notgood.png"><br>
-									<h4>{{ $t('no_more_fights') }}</h4>
-								</div>
+								<garden-no-fights v-else />
 							</div>
 							<div v-else>
 								<loader v-if="LeekWars.battleRoyale.progress == 0" />
@@ -246,7 +232,9 @@
 </template>
 
 <script lang="ts">
+	import { locale } from '@/locale'
 	import { Farmer } from '@/model/farmer'
+	import { mixins } from '@/model/i18n'
 	import { Leek } from '@/model/leek'
 	import { LeekWars } from '@/model/leekwars'
 	import { SocketMessage } from '@/model/socket'
@@ -256,13 +244,15 @@
 	import GardenCompo from './garden-compo.vue'
 	import GardenFarmer from './garden-farmer.vue'
 	import GardenLeek from './garden-leek.vue'
+	const GardenNoFights = () => import(/* webpackChunkName: "[request]" */ `@/component/garden/garden-no-fights.${locale}.i18n`)
 
 	@Component({
-		name: 'garden', i18n: {},
+		name: 'garden', i18n: {}, mixins,
 		components: {
 			'garden-leek': GardenLeek,
 			'garden-farmer': GardenFarmer,
-			'garden-compo': GardenCompo
+			'garden-compo': GardenCompo,
+			'garden-no-fights': GardenNoFights
 		}
 	})
 	export default class Garden extends Vue {
@@ -287,11 +277,6 @@
 		get farmerEnabled() { return this.garden && this.garden.farmer_enabled }
 		get teamEnabled() { return this.garden && this.garden.team_enabled }
 		get battleRoyaleEnabled() { return this.garden && this.garden.battle_royale_enabled }
-		get remainingTime() {
-			const midnignt = new Date(LeekWars.timeSeconds * 1000)
-			midnignt.setUTCHours(23, 0, 0, 0)
-			return LeekWars.formatTimeSeconds(Math.round(midnignt.getTime() / 1000 - LeekWars.timeSeconds))
-		}
 
 		mounted() {
 			LeekWars.setTitle(this.$t('title'))
@@ -555,11 +540,12 @@
 	.fights {
 		font-size: 20px;
 		color: #444;
+		margin-top: 8px;
 		img {
 			vertical-align: middle;
 			margin-right: 3px;
 			margin-bottom: 4px;
-			width: 24px;
+			width: 20px;
 		}
 	}
 	.player-count {
@@ -587,9 +573,6 @@
 		width: calc(20% - 2px);
 		min-width: 150px;
 		border: 1px solid rgba(0, 0, 0, 0.1);
-	}
-	.composition-wrapper {
-		padding: 10px 0;
 	}
 	.leek, .composition, .composition-wrapper, .opponents .farmer {
 		cursor: pointer;

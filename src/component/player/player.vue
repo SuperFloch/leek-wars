@@ -1,5 +1,5 @@
 <template lang="html">
-	<div :style="{width: width + 'px', height: height + 36 + 'px'}">
+	<div :style="{width: width + 'px', height: height + BAR_HEIGHT + 'px'}">
 		<div v-if="error" class="error">
 			<h2>{{ $t('error_generating_fight') }}</h2>
 			<br>
@@ -63,7 +63,7 @@
 			</div>
 		</div>
 		<div v-show="loaded" class="game">
-			<div :style="{height: height + 'px'}" class="layers">
+			<div :style="{height: (height + 6) + 'px'}" class="layers">
 				<canvas :style="{width: width + 'px'}" class="bg-canvas"></canvas>
 				<canvas :style="{width: width + 'px'}" class="game-canvas" @click="canvasClick" @mousemove="mousemove"></canvas>
 				<div class="progress-bar-wrapper">
@@ -105,6 +105,21 @@
 				</v-tooltip>
 				<div class="turn">{{ $t('fight.turn_n', [game.turn]) }}</div>
 				<div class="filler"></div>
+
+				<v-tooltip v-if="$store.state.farmer && $store.state.farmer.admin" :open-delay="0" :close-delay="0" top content-class="top">
+					<template v-slot:activator="{ on: tooltip }">
+						<v-menu :close-on-content-click="false" top offset-y left>
+							<template v-slot:activator="{ on: menu }">
+								<v-icon v-ripple class="control" v-on="{...tooltip, ...menu}">mdi-map</v-icon>
+							</template>
+							<v-radio-group v-model="game.mapType" class="map-menu" hide-details :mandatory="true">
+								<v-radio v-for="(map, m) of maps" :key="map" :label="map" :value="m" />
+							</v-radio-group>
+						</v-menu>
+					</template>
+					Carte
+				</v-tooltip>
+
 				<v-tooltip :open-delay="0" :close-delay="0" top content-class="top">
 					<template v-slot:activator="{ on }">
 						<v-icon v-ripple class="control" v-on="on" @click="toggleFullscreen">mdi-aspect-ratio</v-icon>
@@ -118,25 +133,49 @@
 								<v-icon v-ripple class="control" v-on="{...tooltip, ...menu}">mdi-settings-outline</v-icon>
 							</template>
 							<v-list :dense="true" class="settings-menu">
-								<v-list-item v-ripple>
+								<div class="section">INTERFACE</div>
+								<v-list-item v-ripple @click="game.showLifes = !game.showLifes">
 									<v-icon>mdi-heart-half-full</v-icon>
-									<v-switch v-model="game.showLifes" :label="$t('display_life_bars')" hide-details />
+									<v-switch :input-value="game.showLifes" :label="$t('display_life_bars') + ' (L)'" hide-details />
 								</v-list-item>
-								<v-list-item v-ripple>
-									<v-icon>mdi-view-comfy</v-icon>
-									<v-switch v-model="game.tactic" :label="$t('tactic_mode')" hide-details />
+								<v-list-item :ripple="game.showLifes" :class="{disabled: !game.showLifes}" @click="game.showLifes ? (game.showEffects = !game.showEffects) : null">
+									<v-icon>mdi-flare</v-icon>
+									<v-switch :input-value="game.showEffects" :disabled="!game.showLifes" :label="$t('display_effects') + ' (E)'" hide-details />
 								</v-list-item>
-								<v-list-item v-ripple>
-									<v-icon>mdi-numeric-1-box</v-icon>
-									<v-switch v-model="game.showCells" :label="$t('display_cell_numbers')" hide-details />
+								<v-list-item v-ripple @click="game.showActions = !game.showActions">
+									<v-icon>mdi-format-list-bulleted</v-icon>
+									<v-switch :input-value="game.showActions" :label="$t('show_actions') + ' (A)'" hide-details />
 								</v-list-item>
-								<v-list-item v-ripple>
-									<v-icon>mdi-key</v-icon>
-									<v-switch v-model="game.showIDs" :label="$t('show_ids')" hide-details />
+								<v-list-item :ripple="game.showActions" :class="{disabled: !game.showActions}" @click="game.showActions ? (game.largeActions = !game.largeActions) : null">
+									<v-icon>mdi-view-split-vertical</v-icon>
+									<v-switch :input-value="game.largeActions" :disabled="!game.showActions" :label="$t('large_actions') + ' (G)'" hide-details />
 								</v-list-item>
-								<v-list-item v-ripple>
+								<div class="section">GRAPHISMES</div>
+								<v-list-item v-ripple @click="game.shadows = !game.shadows">
 									<v-icon>mdi-box-shadow</v-icon>
-									<v-switch v-model="game.shadows" :label="$t('display_shadows')" hide-details />
+									<v-switch :input-value="game.shadows" :label="$t('display_shadows') + ' (O)'" hide-details />
+								</v-list-item>
+								<v-list-item>
+									<v-icon>mdi-weather-night</v-icon>
+									<v-switch v-if="!game.autoDark" v-model="game.dark" :label="$t('dark_mode') + ' (D)'" class="night" hide-details />
+									<v-checkbox v-model="game.autoDark" label="Auto" hide-details />
+								</v-list-item>
+								<div class="section">DEVELOPEMENT</div>
+								<v-list-item v-ripple @click="game.tactic = !game.tactic">
+									<v-icon>mdi-view-comfy</v-icon>
+									<v-switch :input-value="game.tactic" :label="$t('tactic_mode') + ' (T)'" hide-details />
+								</v-list-item>
+								<v-list-item v-ripple @click="game.plainBackground = !game.plainBackground">
+									<v-icon>mdi-format-color-fill</v-icon>
+									<v-switch :input-value="game.plainBackground" :label="$t('plain_background') + ' (U)'" hide-details />
+								</v-list-item>
+								<v-list-item v-ripple @click="game.showCells = !game.showCells">
+									<v-icon>mdi-numeric-1-box</v-icon>
+									<v-switch :input-value="game.showCells" :label="$t('display_cell_numbers') + ' (C)'" hide-details />
+								</v-list-item>
+								<v-list-item :ripple="game.showLifes" :class="{disabled: !game.showLifes}" @click="game.showLifes ? (game.showIDs = !game.showIDs) : null">
+									<v-icon>mdi-key</v-icon>
+									<v-switch :input-value="game.showIDs" :disabled="!game.showLifes" :label="$t('show_ids') + ' (I)'" hide-details />
 								</v-list-item>
 							</v-list>
 						</v-menu>
@@ -158,6 +197,7 @@
 	import { locale } from '@/locale'
 	import { Farmer } from '@/model/farmer'
 	import { Fight, FightType, Report } from '@/model/fight'
+	import { mixins } from '@/model/i18n'
 	import { LeekWars } from '@/model/leekwars'
 	import { SocketMessage } from '@/model/socket'
 	import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
@@ -165,13 +205,12 @@
 	import Hud from './hud.vue'
 	import(/* webpackChunkName: "[request]" */ /* webpackMode: "eager" */ `@/lang/fight.${locale}.lang`)
 
-	const BAR_HEIGHT = 36
-
 	@Component({
 		name: 'player',
 		components: { Hud }
 	})
 	export default class Player extends Vue {
+		BAR_HEIGHT = 42
 		@Prop() fightId!: string
 		@Prop() requiredWidth!: number
 		@Prop() requiredHeight!: number
@@ -192,17 +231,28 @@
 		timeout: any = null
 		request: any = null
 		progress: number = 0
+		maps = ["Nexus", "Usine", "Désert", "Forêt", "Glacier", "Plage", "Temple"]
 
 		created() {
 			if (localStorage.getItem('fight/shadows') === null) { localStorage.setItem('fight/shadows', 'true') }
 			if (localStorage.getItem('fight/sound') === null) { localStorage.setItem('fight/sound', 'true') }
 			if (localStorage.getItem('fight/lifes') === null) { localStorage.setItem('fight/lifes', 'true') }
+			if (localStorage.getItem('fight/effects') === null) { localStorage.setItem('fight/effects', 'true') }
+			if (localStorage.getItem('fight/actions') === null) { localStorage.setItem('fight/actions', 'true') }
+			if (localStorage.getItem('fight/auto-dark') === null) { localStorage.setItem('fight/auto-dark', 'true') }
 			this.game.shadows = localStorage.getItem('fight/shadows') === 'true'
 			this.game.tactic = localStorage.getItem('fight/tactic') === 'true'
 			this.game.showCells = localStorage.getItem('fight/cells') === 'true'
 			this.game.showLifes = localStorage.getItem('fight/lifes') === 'true'
+			this.game.showEffects = localStorage.getItem('fight/effects') === 'true'
 			this.game.showIDs = localStorage.getItem('fight/ids') === 'true'
+			this.game.showActions = localStorage.getItem('fight/actions') === 'true'
+			this.game.largeActions = localStorage.getItem('fight/large-actions') === 'true'
+			this.game.actionsWidth = parseInt(localStorage.getItem('fight/actions-width') || '395', 10)
 			this.game.sound = localStorage.getItem('fight/sound') === 'true'
+			this.game.autoDark = localStorage.getItem('fight/auto-dark') === 'true'
+			this.game.dark = localStorage.getItem('fight/dark') === 'true'
+			this.game.plainBackground = localStorage.getItem('fight/plain-background') === 'true'
 			this.game.player = this
 			this.getFight(true)
 			this.resize()
@@ -223,6 +273,7 @@
 			})
 		}
 		@Watch('requiredWidth')
+		@Watch('requiredHeight')
 		requiredWidthChange() {
 			this.resize()
 		}
@@ -245,7 +296,7 @@
 				const aspectRatio = window.devicePixelRatio || 1
 				this.game.ratio = aspectRatio
 				this.width = newWidth
-				this.height = newHeight - BAR_HEIGHT
+				this.height = newHeight - this.BAR_HEIGHT
 				this.canvas.width = this.width * aspectRatio
 				this.canvas.height = this.height * aspectRatio
 				this.game.resize(this.canvas.width, this.canvas.height)
@@ -256,7 +307,7 @@
 		setOrigin() {
 			setTimeout(() => {
 				const p = this.$el.getBoundingClientRect()
-				this.game.setOrigin(p.left, p.top)
+				this.game.setOrigin(p.left, p.top + window.pageYOffset)
 			}, 50)
 		}
 		mousemove(e: MouseEvent) {
@@ -280,7 +331,37 @@
 			}
 		}
 		keyup(e: KeyboardEvent) {
-			if (e.keyCode === 81) { // Q
+			if (e.keyCode === 65) { // A
+				this.game.showActions = !this.game.showActions
+				e.preventDefault()
+			} else if (e.keyCode === 69) { // E
+				this.game.showEffects = !this.game.showEffects
+				e.preventDefault()
+			} else if (e.keyCode === 76) { // L
+				this.game.showLifes = !this.game.showLifes
+				e.preventDefault()
+			} else if (e.keyCode === 79) { // O
+				this.game.shadows = !this.game.shadows
+				e.preventDefault()
+			} else if (e.keyCode === 71) { // G
+				this.game.largeActions = !this.game.largeActions
+				e.preventDefault()
+			} else if (e.keyCode === 84) { // T
+				this.game.tactic = !this.game.tactic
+				e.preventDefault()
+			} else if (e.keyCode === 68) { // D
+				this.game.dark = !this.game.dark
+				e.preventDefault()
+			} else if (e.keyCode === 85) { // U
+				this.game.plainBackground = !this.game.plainBackground
+				e.preventDefault()
+			} else if (e.keyCode === 67) { // C
+				this.game.showCells = !this.game.showCells
+				e.preventDefault()
+			} else if (e.keyCode === 73) { // I
+				this.game.showIDs = !this.game.showIDs
+				e.preventDefault()
+			} else if (e.keyCode === 81) { // Q
 				if (this.fullscreen) {
 					this.toggleFullscreen()
 				}
@@ -301,6 +382,10 @@
 				e.preventDefault()
 			} else if (e.keyCode === 86) { // V
 				this.game.sound = !this.game.sound
+				e.preventDefault()
+			} else if (e.keyCode === 88) { // X
+				this.game.map.seed = Math.random() * 10000000 | 0
+				this.game.mapLoaded()
 				e.preventDefault()
 			}
 		}
@@ -444,9 +529,41 @@
 			localStorage.setItem('fight/lifes', '' + this.game.showLifes)
 			this.game.redraw()
 		}
+		@Watch("game.showEffects") toggleEffects() {
+			localStorage.setItem('fight/effects', '' + this.game.showEffects)
+			this.game.redraw()
+		}
 		@Watch("game.showIDs") toggleIDs() {
 			localStorage.setItem('fight/ids', '' + this.game.showIDs)
 			this.game.redraw()
+		}
+		@Watch("game.showActions") toggleActions() {
+			localStorage.setItem('fight/actions', '' + this.game.showActions)
+			if (this.game.actionsWidth === 0) {
+				this.game.actionsWidth = 395
+			}
+			this.resize()
+		}
+		@Watch("game.largeActions") toggleLargeActions() {
+			localStorage.setItem('fight/large-actions', '' + this.game.largeActions)
+			if (this.game.actionsWidth === 0) {
+				this.game.actionsWidth = 395
+			}
+			this.resize()
+		}
+		@Watch("game.actionsWidth") updateActionsWidth() {
+			localStorage.setItem('fight/actions-width', '' + this.game.actionsWidth)
+			this.resize()
+		}
+		@Watch("game.dark") toggleDark() {
+			localStorage.setItem('fight/dark', '' + this.game.dark)
+		}
+		@Watch("game.autoDark") toggleAutoDark() {
+			localStorage.setItem('fight/auto-dark', '' + this.game.autoDark)
+		}
+		@Watch("game.plainBackground") updatePlainBackground() {
+			localStorage.setItem('fight/plain-background', '' + this.game.plainBackground)
+			this.resize()
 		}
 		canvasClick() {
 			this.game.selectEntity(this.game.click())
@@ -455,6 +572,13 @@
 		endOfFight() {
 			if (this.game.going_to_report) {
 				this.$router.push("/report/" + this.fightId)
+			}
+		}
+
+		@Watch('game.mapType')
+		updateMap(after: number, before: number) {
+			if (before !== -1) {
+				this.game.updateMap()
 			}
 		}
 	}
@@ -754,6 +878,22 @@
 	}
 	.settings-menu ::v-deep label {
 		color: hsla(0,0%,100%,.7);
+		&.v-label--is-disabled {
+			color: hsla(0,0%,100%,.7);
+		}
+	}
+	.settings-menu ::v-deep .v-input--switch.v-input--is-dirty.v-input--is-disabled {
+		opacity: 1;
+	}
+	.settings-menu .v-input--checkbox {
+		color: hsla(0,0%,100%,.7);
+	}
+	.settings-menu .night {
+		margin-right: 10px;
+	}
+	.v-list-item.disabled {
+		opacity: 0.45;
+		cursor: default;
 	}
 	.loader {
 		padding-bottom: 10px;
@@ -777,5 +917,19 @@
 			border-radius: 6px;
 			transition: width 1s;
 		}
+	}
+	.map-menu {
+		background: #1E1E1E;
+		color: #eee;
+		padding: 10px;
+		overflow: hidden;
+		::v-deep .theme--light.v-label {
+			color: #eee;
+		}
+	}
+	.section {
+		color: white;
+		padding: 4px 8px;
+		font-size: 13px;
 	}
 </style>

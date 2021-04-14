@@ -145,6 +145,12 @@
 			<br>
 			<router-link to="/app" class="green">{{ $t('main.app') }}</router-link>
 		</panel>
+
+		<panel title="Licenses">
+			<ul>
+				<li>Angel_chorus2.mp3, Taira Komori, edited, CC-BY3 license.</li>
+			</ul>
+		</panel>
 	</div>
 </template>
 
@@ -186,7 +192,6 @@
 				{ name: "PHP", link: "http://www.php.net/", image: "php.png" },
 				{ name: "Memcached", link: "https://memcached.org/", image: "memcached.svg" },
 				{ name: "Python", link: "https://www.python.org/", image: "python.svg" },
-				{ name: "Swift Mailer", link: "https://swiftmailer.symfony.com/", image: "swiftmailer.png" },
 			]},
 			{ name: "leekscript", items: [
 				{ name: "C++", link: "https://fr.cppreference.com/w/", image: "cpp.png" },
@@ -203,7 +208,6 @@
 				{ name: "GIMP", link: "https://www.gimp.org/fr/", image: "gimp.svg" },
 				{ name: "Inkscape", link: "https://inkscape.org/fr/", image: "inkscape.svg" },
 				{ name: "Blender", link: "https://www.blender.org/", image: "blender.svg" },
-				{ name: "Travis CI", link: "https://travis-ci.com/", image: "travis.svg" },
 				{ name: "Codacy", link: "https://www.codacy.com/", image: "codacy.svg" },
 				{ name: "FileZilla", link: "https://filezilla-project.org/", image: "filezilla.svg" },
 			]},

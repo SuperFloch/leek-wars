@@ -8,6 +8,7 @@ import { ChipTemplate } from '@/model/chip'
 import { Commands } from '@/model/commands'
 import { CHIP_TEMPLATES, CHIPS, CONSTANTS, FUNCTIONS, HAT_TEMPLATES, HATS, ITEMS, POMPS, POTIONS, SUMMON_TEMPLATES, TROPHIES, TROPHY_CATEGORIES, WEAPONS } from '@/model/data'
 import { Emojis } from '@/model/emojis'
+import { Function } from '@/model/function'
 import { Socket } from '@/model/socket'
 import { Squares } from '@/model/squares'
 import { store } from '@/model/store'
@@ -16,6 +17,7 @@ import { WeaponTemplate } from '@/model/weapon'
 import router from '@/router'
 import { TranslateResult } from 'vue-i18n'
 import { ChatType, ChatWindow } from './chat'
+import { Constant } from './constant'
 import { i18n, loadLanguageAsync } from './i18n'
 import { ItemType } from './item'
 import { PotionEffect, PotionTemplate } from './potion'
@@ -150,6 +152,11 @@ const HAT_SIZES: { [key: number]: {width: number, height: number} } = {
 const ORDERED_CHIPS = orderChips(CHIPS)
 const ORDERED_WEAPONS = orderWeapons(WEAPONS)
 const POTIONS_BY_SKIN = potionsBySkin(POTIONS)
+const POTION_BY_NAME = potionByName(POTIONS)
+const WEAPON_BY_NAME = weaponByName(WEAPONS)
+const CHIP_BY_NAME = chipByName(CHIPS)
+const FUNCTION_BY_ID = functionById(FUNCTIONS)
+const CONSTANT_BY_ID = constantById(CONSTANTS)
 
 class Language {
 	public code!: string
@@ -167,7 +174,7 @@ const LeekWars = {
 	DEV,
 	LOCAL,
 	API: LOCAL ? 'http://localhost:5000/api/' : 'https://leekwars.com/api/',
-	AVATAR: DEV ? 'https://leekwars.com/image/' : '/image/',
+	AVATAR: DEV ? 'https://leekwars.com/image/' : 'https://leekwars.com/image/',
 	STATIC: '/',
 	post,
 	get,
@@ -206,7 +213,9 @@ const LeekWars = {
 	leekTheme: localStorage.getItem('leek-theme') === 'true',
 	setLocale(locale: string) {
 		loadLanguageAsync(vueMain, locale)
-		LeekWars.post('farmer/set-language', {language: locale})
+		if (store.state.connected) {
+			LeekWars.post('farmer/set-language', {language: locale})
+		}
 	},
 	getLeekAppearance: (level: number): number => {
 		if (level < 10) { return 1 } else if (level < 20) { return 2 } else if (level < 50) { return 3 } else if (level < 80) { return 4 } else if (level < 100) { return 5 } else if (level < 150) { return 6 } else if (level < 200) { return 7 } else if (level < 250) { return 8 } else if (level < 300) { return 9 } else if (level < 301) { return 10 }
@@ -296,6 +305,11 @@ const LeekWars = {
 		return ('' + string).replace(/&/g, "&amp;")
 			.replace(/>/g, "&gt;").replace(/</g, "&lt;")
 			.replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+	},
+	decodehtmlentities(string: any) {
+		return ('' + string).replace(/&amp;/g, "&")
+			.replace(/&gt;/g, ">").replace(/&lt;/g, "<")
+			.replace(/&nbsp;/g, "\t")
 	},
 	formatNumber(n: number) {
 		return ("" + n).replace(/\B(?=(\d{3})+(?!\d))/g, " ")
@@ -467,7 +481,7 @@ const LeekWars = {
 		LeekWars.sfw = false
 		LeekWars.setFavicon(true)
 	},
-	toast(message: string | TranslateResult, durationOrCallback: number | Function = 1800) {
+	toast(message: string | TranslateResult, durationOrCallback: number | any = 1800) {
 		const d = typeof(durationOrCallback) === "number" ? durationOrCallback : 1800
 		const callback = typeof(durationOrCallback) === "function" ? durationOrCallback : null
 
@@ -525,14 +539,19 @@ const LeekWars = {
 	hats: Object.freeze(HATS),
 	pomps: Object.freeze(POMPS),
 	weapons: Object.freeze(WEAPONS),
+	weaponByName: Object.freeze(WEAPON_BY_NAME),
 	items: Object.freeze(ITEMS),
 	chips: Object.freeze(CHIPS),
+	chipByName: Object.freeze(CHIP_BY_NAME),
+	functionById: Object.freeze(FUNCTION_BY_ID),
+	constantById: Object.freeze(CONSTANT_BY_ID),
 	trophies: Object.freeze(TROPHIES),
 	chipTemplates: Object.freeze(CHIP_TEMPLATES),
 	trophyCategories: Object.freeze(TROPHY_CATEGORIES),
 	functions: Object.freeze(FUNCTIONS),
 	summonTemplates: Object.freeze(SUMMON_TEMPLATES),
 	potions: Object.freeze(POTIONS),
+	potionByName: Object.freeze(POTION_BY_NAME),
 	hatTemplates: Object.freeze(HAT_TEMPLATES),
 	orderedChips: Object.freeze(ORDERED_CHIPS),
 	orderedWeapons: Object.freeze(ORDERED_WEAPONS),
@@ -650,7 +669,50 @@ function potionsBySkin(potions: {[key: string]: PotionTemplate}) {
 	return result
 }
 
-function formatDuration(timestamp: number, capital: boolean) {
+function potionByName(potions: {[key: string]: PotionTemplate}) {
+	const result: { [key: string]: PotionTemplate } = {}
+	for (const w in potions) {
+		const potion = potions[w]
+		result[potion.name] = potion
+	}
+	return result
+}
+
+function weaponByName(weapons: {[key: string]: WeaponTemplate}) {
+	const result: { [key: string]: WeaponTemplate } = {}
+	for (const w in weapons) {
+		const weapon = weapons[w]
+		result[weapon.name] = weapon
+	}
+	return result
+}
+
+function chipByName(chips: {[key: string]: ChipTemplate}) {
+	const result: { [key: string]: ChipTemplate } = {}
+	for (const c in chips) {
+		const chip = chips[c]
+		result[chip.name] = chip
+	}
+	return result
+}
+
+function functionById(functions: Function[]) {
+	const result: { [key: number]: Function } = {}
+	for (const f of functions) {
+		result[f.id] = f
+	}
+	return result
+}
+
+function constantById(constants: Constant[]) {
+	const result: { [key: number]: Constant } = {}
+	for (const c of constants) {
+		result[c.id] = c
+	}
+	return result
+}
+
+function formatDuration(timestamp: number, capital: boolean = false) {
 
 	if (timestamp === 0 || timestamp == null) { return "-" }
 
@@ -757,7 +819,8 @@ function createCodeArea(code: string, element: HTMLElement) {
 	import(/* webpackChunkName: "codemirror" */ "@/codemirror-wrapper").then(wrapper => {
 		wrapper.CodeMirror.runMode(code, "leekscript", element)
 		element.innerHTML = '<span class="line-number"></span><pre>' + element.innerHTML + '</pre>'
-		const num = element.innerHTML.split(/\n/).length
+
+		const num = code.split(/\n/).length
 		for (let j = 0; j < num; j++) {
 			const line_num = element.getElementsByTagName('span')[0]
 			line_num.innerHTML += '<span>' + (j + 1) + '</span>'
@@ -826,6 +889,7 @@ function weaponSound(id: number) {
 		18: ['grenade_shoot', 0.7, 'explosion'], 19: ['electrisor'], 20: ['gazor', 1.2, 'explosion'], 21: ['laser', 0.1, 'poison'],
 		22: ['rifle.wav', 0.15, 'rifle.wav', 0.15, 'rifle.wav'],
 		23: ['double_gun'],
+		24: ['rifle.wav', 0.15, 'rifle.wav', 0.15, 'rifle.wav'],
 	} as {[key: number]: any})[id]
 }
 function chipSound(id: number) {
@@ -839,12 +903,15 @@ function chipSound(id: number) {
 		29: ['buff'], 30: ['buff'], 31: ['buff'], 32: ['buff'], 33: ['buff'], 34: ['buff'],
 		35: ['buff'], 36: ['liberation'], 37: ['teleportation'], 38: ['heal'], 39: ['teleportation'],
 		40: ['bulb'], 41: ['bulb'], 42: ['bulb'], 43: ['bulb'], 44: ['bulb'], 45: ['bulb'], 46: ['bulb'],
-		47: ['heal'], 48: ['shield'], 49: ['heal'], 50: ['fire', 0, 'rock', 0.25, 'rock', 0.2, 'rock', 0.3, 'rock', 0.2, 'rock'],
+		47: ['heal'], 48: ['shield'], 49: ['resurrection'], 50: ['fire', 0, 'rock', 0.25, 'rock', 0.2, 'rock', 0.3, 'rock', 0.2, 'rock'],
 		51: ['buff'], 52: ['heal'], 53: ['heal'], 54: ['buff'], 55: ['debuff'], 56: ['debuff'], 57: ['debuff'],
 		58: ['debuff'], 59: ['debuff'], 60: ['buff'], 61: ['poison'], 62: ['poison'], 63: ['poison'],
 		64: ['buff'], 65: ['buff'], 66: ['buff'], 67: ['buff'], 68: ['buff'], 69: ['fire'], 70: ['liberation'],
 		71: ['sword'], 72: ['buff'], 73: ['heal'], 74: ['buff'], 75: ['alteration.wav'], 76: ['lightning', 0, 'electrisor'], 77: ['bulb'], 78: ['move'],
-		79: ['poison'], 80: ['heal'], 81: ['buff'], 82: ['buff']
+		79: ['poison'], 80: ['heal'], 81: ['buff'], 82: ['buff'],
+		83: ['teleportation'], 84: ['heal'], 85: ['alteration.wav'], 86: ['alteration.wav'], 87: ['alteration.wav'],
+		88: [], 89: [], 92: ['bulb'], 93: ['bulb'], 94: ['heal'], 95: ['debuff'], 96: ['debuff'], 97: ['poison'],
+		98: ['buff'], 99: ['shield'], 100: ['liberation'],
 	} as {[key: number]: any})[id]
 }
 function playSound(item: any, type: string) {

@@ -2,7 +2,7 @@
 import Player from '@/component/player.vue'
 import { Bubble } from '@/component/player/game/bubble'
 import { Bulb } from '@/component/player/game/bulb'
-import { Acceleration, Adrenaline, Alteration, Antidote, Armor, Armoring, BallAndChain, Bandage, Bark, Burning, Carapace, ChipAnimation, Collar, Covetousness, Covid, Cure, DevilStrike, Doping, Drip, Elevation, Ferocity, Fertilizer, Flame, Flash, Fortress, Fracture, Helmet, Ice, Iceberg, Inversion, Jump, Knowledge, LeatherBoots, Liberation, Lightning, Loam, Meteorite, Mirror, Motivation, Pebble, Plague, Plasma, Precipitation, Protein, Punishment, Rage, Rampart, Reflexes, Regeneration, Remission, Rock, Rockfall, SevenLeagueBoots, Shield, Shock, SlowDown, Solidification, Soporific, Spark, Stalactite, Steroid, Stretching, Teleportation, Thorn, Toxin, Tranquilizer, Vaccine, Vampirization, Venom, Wall, WarmUp, Whip, WingedBoots, Wizardry } from '@/component/player/game/chips'
+import { Acceleration, Adrenaline, Alteration, Antidote, Armor, Armoring, Arsenic, BallAndChain, Bandage, Bark, BoxingGlove, Brainwashing, Bramble, Burning, Carapace, ChipAnimation, Collar, Covetousness, Covid, Crushing, Cure, Desintegration, DevilStrike, Dome, Doping, Drip, Elevation, Ferocity, Fertilizer, Flame, Flash, Fortress, Fracture, Grapple, Helmet, Ice, Iceberg, Inversion, Jump, Knowledge, LeatherBoots, Liberation, Lightning, Loam, Manumission, Meteorite, Mirror, Motivation, Mutation, Pebble, Plague, Plasma, Precipitation, Protein, Punishment, Rage, Rampart, Reflexes, Regeneration, Remission, Repotting, Resurrection, Rock, Rockfall, Serum, SevenLeagueBoots, Shield, Shock, SlowDown, Solidification, Soporific, Spark, Stalactite, Steroid, Stretching, Teleportation, Therapy, Thorn, Toxin, Tranquilizer, Transmutation, Vaccine, Vampirization, Venom, Wall, WarmUp, Whip, WingedBoots, Wizardry } from '@/component/player/game/chips'
 import { EntityDirection, EntityType, FightEntity } from '@/component/player/game/entity'
 import { Ground } from '@/component/player/game/ground'
 import { Leek } from '@/component/player/game/leek'
@@ -11,7 +11,7 @@ import { Obstacle } from '@/component/player/game/obstacle'
 import { Particles } from '@/component/player/game/particles'
 import { S, Sound } from '@/component/player/game/sound'
 import { T, Texture } from '@/component/player/game/texture'
-import { Axe, BLaser, Broadsword, Destroyer, DoubleGun, Electrisor, FlameThrower, Gazor, GrenadeLauncher, IllicitGrenadeLauncher, JLaser, Katana, Laser, MachineGun, Magnum, MLaser, MysteriousElectrisor, Pistol, RevokedMLaser, Rhino, Rifle, Shotgun, UnbridledGazor } from '@/component/player/game/weapons'
+import { Axe, BLaser, Broadsword, Destroyer, DoubleGun, Electrisor, ExplorerRifle, Fish, FlameThrower, Gazor, GrenadeLauncher, IllicitGrenadeLauncher, JLaser, Katana, Laser, MachineGun, Magnum, MLaser, MysteriousElectrisor, Pistol, RevokedMLaser, Rhino, Rifle, Shotgun, UnbridledGazor } from '@/component/player/game/weapons'
 import { env } from '@/env'
 import { locale } from '@/locale'
 import { Action, ActionType } from '@/model/action'
@@ -44,7 +44,7 @@ const FPS = 60
 const MAX_DT = 8
 const GROUND_TEXTURE = true
 const SHADOW_SCALE = 0.5
-const SHADOW_ALPHA = 0.4
+const SHADOW_ALPHA = 0.55
 
 let lastTime = new Date().getTime()
 let dt = 0
@@ -105,6 +105,7 @@ const WEAPONS = [
 	RevokedMLaser, // 21
 	Rifle, // 22
 	Rhino, // 23
+	ExplorerRifle, // 24
 ]
 
 const CHIPS = [
@@ -156,7 +157,7 @@ const CHIPS = [
 	null, // 46
 	Remission, // 47
 	Carapace, // 48
-	null, // 49
+	Resurrection, // 49
 	DevilStrike, // 50
 	Whip, // 51
 	Loam, // 52
@@ -184,12 +185,30 @@ const CHIPS = [
 	Precipitation, // 74
 	Alteration, // 75
 	Plasma, // 76
-	null, // 77
+	null, // 77 bulb
 	Jump, // 78
 	Covid, // 79
 	Elevation, // 80
 	Knowledge, // 81
 	Wizardry, // 82
+	Repotting, // 83
+	Therapy, // 84
+	Mutation, // 85
+	Desintegration, // 86
+	Transmutation, // 87
+	Grapple, // 88
+	BoxingGlove, // 89
+	null, // 90
+	null, // 91
+	null, // 92 bulb
+	null, // 93 bulb
+	Serum, // 94
+	Crushing, // 95
+	Brainwashing, // 96
+	Arsenic, // 97
+	Bramble, // 98
+	Dome, // 99
+	Manumission, // 100
 ]
 
 class Game {
@@ -235,6 +254,7 @@ class Game {
 	public markers = new Array()
 	public markersText = new Array()
 	// Map
+	public mapType: number = -1 // -1 = pas initialisée
 	public map!: Map
 	public drawArea = 0
 	// Mouse
@@ -254,7 +274,14 @@ class Game {
 	public shadows = true
 	public showCells: boolean = false
 	public showLifes: boolean = true
+	public showEffects: boolean = true
 	public showIDs: boolean = false
+	public showActions: boolean = true
+	public dark: boolean = false
+	public autoDark: boolean = true
+	public largeActions: boolean = false
+	public actionsWidth: number = 400
+	public plainBackground: boolean = false
 	public sound: boolean = false
 	public atmosphere!: Sound
 	public obstacles!: {[key: number]: number[]}
@@ -285,6 +312,7 @@ class Game {
 	public cancelled: boolean = false
 	public player!: Player
 	public halloween: boolean = false
+	public textRatio: number = 1
 
 	public maps: Map[] = [
 		new Nexus(this),
@@ -322,23 +350,25 @@ class Game {
 			return
 		}
 
+		this.mapType = this.data.map.type + 1
 		this.map = this.maps[this.data.map.type + 1]
+		this.map.seed = fight.id
 		this.map.create()
 
 		// Atmosphere sound of the map
-		this.atmosphere = this.map.sound
+		this.atmosphere = this.map.options.sound
 
 		// Obstacles
 		if (this.halloween) {
 			T.pumpkin.load(this)
 		}
+
 		this.obstacles = this.data.map.obstacles
 		for (const i in this.obstacles) {
 			const o = this.obstacles[i]
-			const type = o[0]
-			const size = o[1]
+			const size = o instanceof Array ? o[1] : o // Before the obstacle was an array [type, size]
 			if (size !== -1) {
-				const obstacle = new Obstacle(this, type, size, this.ground.field.cells[parseInt(i, 10)])
+				const obstacle = new Obstacle(this, size, this.ground.field.cells[parseInt(i, 10)])
 				obstacle.resize()
 				this.ground.addObstacle(obstacle)
 			}
@@ -469,6 +499,11 @@ class Game {
 				entity.active = true
 				entity.drawID = this.addDrawableElement(entity, entity.y)
 
+				const l1 = fight.leeks1.find(l => l.name === entity.name)
+				if (l1) { entity.fish = l1.fish }
+				const l2 = fight.leeks2.find(l => l.name === entity.name)
+				if (l2) { entity.fish = l2.fish }
+
 			} else if (entity instanceof Bulb) {
 
 				entity.name = i18n.t('entity.' + entity.name) as string
@@ -481,7 +516,7 @@ class Game {
 
 			} else if (entity instanceof Turret) {
 
-				entity.name = i18n.t('fight.turret') as string
+				entity.name = i18n.t('entity.turret') as string
 
 				if (this.teams[entity.team - 1] === undefined) {
 					this.teams[entity.team - 1] = []
@@ -542,6 +577,9 @@ class Game {
 					break
 			}
 		}
+		// console.log("used chips", chipsUsed)
+		// console.log("weapons taken", weaponsTaken)
+		// console.log("weapons used", weaponsUsed)
 
 		// Load common textures
 		T.tp.load(this)
@@ -570,6 +608,14 @@ class Game {
 				sounds.add(sound)
 			}
 		}
+		for (const texture of Fish.textures) {
+			textures.add(texture)
+		}
+		for (const sound of Fish.sounds) {
+			sounds.add(sound)
+		}
+		// console.log("textures to load", textures)
+		// console.log("sounds to load", sounds)
 		for (const texture of textures) {
 			texture.load(this)
 		}
@@ -588,6 +634,7 @@ class Game {
 
 	public setLogs(logs: any) {
 		// Merge logs
+		// return
 		for (const farmer in logs) {
 			const farmerLogs = logs[farmer]
 			const me = parseInt(farmer, 10) === store.state.farmer!.id
@@ -658,6 +705,7 @@ class Game {
 		this.width = width
 		this.height = height
 		this.ground.resize(width, height, this.shadows)
+		this.textRatio = Math.sqrt(window.devicePixelRatio)
 	}
 	public setOrigin(originX: number, originY: number) {
 		this.mouseOriginX = originX + Math.round(this.ground.startX / this.ratio)
@@ -937,7 +985,11 @@ class Game {
 		}
 		case ActionType.SET_WEAPON: {
 			const leek = this.leeks[action.params[1]] as Leek
-			leek.setWeapon(new WEAPONS[action.params[2] - 1](this))
+			if (leek.fish) {
+				leek.setWeapon(new Fish(this))
+			} else {
+				leek.setWeapon(new WEAPONS[action.params[2] - 1](this))
+			}
 			leek.weapon_name = LeekWars.weapons[action.params[2]].name
 
 			this.log(action)
@@ -951,18 +1003,26 @@ class Game {
 			const target_cell = this.ground.field.cells[action.params[2]]
 			const chip = action.params[3]
 			const result = action.params[4]
+			const targets_ids = action.params[5] as number[]
 
 			// TODO take the area from the action instead of the item data when available
-			const area = LeekWars.chips[LeekWars.chipTemplates[chip].item].area
-			const targets = this.ground.field.getTargets(target_cell, area) as FightEntity[]
+			// const area = LeekWars.chips[LeekWars.chipTemplates[chip].item].area
+			// const targets = this.ground.field.getTargets(target_cell, area) as FightEntity[]
+			const targets = targets_ids.map(id => this.leeks.find(l => l.id === id)!)
+			// console.log("ids", targets_ids, "targets", targets, "target_cell", target_cell)
 
 			if (this.jumping) {
 				// Update leek cell after teleportation
-				if (chip === 37) {
+				if (chip === 37 || chip === 78) {
 					target_cell.setEntity(launcher)
 				}
-				// Update leeks cells after inversion
-				if (chip === 39) {
+				if (chip === 88 || chip === 89) { // boxing glove & grapple
+					if (targets.length) {
+						target_cell.setEntity(targets[0])
+					}
+				}
+				// Update leeks cells after inversion / repotting
+				if (chip === 39 || chip === 83) {
 					if (targets.length) { // C'est possible de lancer dans le vide
 						const launcher_cell = launcher.cell!
 						target_cell.setEntity(launcher)
@@ -1020,6 +1080,15 @@ class Game {
 		}
 		case ActionType.NOVA_DAMAGE: {
 			this.leeks[action.params[1]].looseMaxLife(action.params[2], this.jumping)
+			if (!this.jumping) {
+				this.log(action)
+				this.leeks[action.params[1]].randomHurt()
+			}
+			this.actionDone()
+			break
+		}
+		case ActionType.NOVA_VITALITY: {
+			this.leeks[action.params[1]].winMaxLife(action.params[2], this.jumping)
 			if (!this.jumping) {
 				this.log(action)
 				this.leeks[action.params[1]].randomHurt()
@@ -1168,6 +1237,11 @@ class Game {
 			this.actionDone()
 			break
 		}
+		case ActionType.REMOVE_SHACKLES : {
+			this.log(action)
+			this.actionDone()
+			break
+		}
 		case ActionType.BUG: {
 			if (!this.jumping) {
 				this.leeks[action.params[1]].bug()
@@ -1219,7 +1293,7 @@ class Game {
 			} else /* weapon */ {
 				if (item in LeekWars.items) {
 					const template = LeekWars.items[item].params
-					const img = ["pistol", "machine_gun", "double_gun", "shotgun", "magnum", "laser", "grenade_launcher", "flamme", "destroyer", "gaz_icon", "electrisor", "m_laser", "b_laser", "katana", "broadsword", "axe", "j_laser", "illicit_grenade_launcher", "mysterious_electrisor", "unbridled_gazor", "revoked_m_laser"][template - 1]
+					const img = ["pistol", "machine_gun", "double_gun", "shotgun", "magnum", "laser", "grenade_launcher", "flamme", "destroyer", "gaz_icon", "electrisor", "m_laser", "b_laser", "katana", "broadsword", "axe", "j_laser", "illicit_grenade_launcher", "mysterious_electrisor", "unbridled_gazor", "revoked_m_laser", "rifle", "rhino", "explorer_rifle"][template - 1]
 					image = LeekWars.STATIC + "image/weapon/" + img + ".png"
 					// Gestion des états du poireau
 					if (template === 8) {
@@ -1297,6 +1371,12 @@ class Game {
 		case EffectType.SHACKLE_MAGIC:
 			leek.looseMagic(value, this.jumping)
 			break
+		case EffectType.SHACKLE_AGILITY:
+			leek.looseAgility(value, this.jumping)
+			break
+		case EffectType.SHACKLE_WISDOM:
+			leek.looseWisdom(value, this.jumping)
+			break
 		case EffectType.DAMAGE_RETURN:
 			leek.buffDamageReturn(value, this.jumping)
 			break
@@ -1326,6 +1406,12 @@ class Game {
 			break
 		case EffectType.SHACKLE_MAGIC:
 			leek.magic += value
+			break
+		case EffectType.SHACKLE_AGILITY:
+			leek.agility += value
+			break
+		case EffectType.SHACKLE_WISDOM:
+			leek.wisdom += value
 			break
 		case EffectType.STEAL_ABSOLUTE_SHIELD:
 		case EffectType.ABSOLUTE_SHIELD:
@@ -1490,7 +1576,7 @@ class Game {
 	}
 	public addConsoleLine(line: any) {
 		this.consoleLines.push(line)
-		if (this.consoleLines.length > 55) {
+		if (this.consoleLines.length > 80) {
 			this.consoleLines.shift()
 		}
 	}
@@ -1786,6 +1872,20 @@ class Game {
 				add_cell(-i, i)
 				add_cell(-i, -i)
 			}
+		} else if (area === Area.SQUARE_1) {
+			init_lines(3)
+			for (let i = -1; i <= 1; ++i) {
+				for (let j = -1; j <= 1; ++j) {
+					add_cell(i, j)
+				}
+			}
+		} else if (area === Area.SQUARE_2) {
+			init_lines(5)
+			for (let i = -2; i <= 2; ++i) {
+				for (let j = -2; j <= 2; ++j) {
+					add_cell(i, j)
+				}
+			}
 		}
 		return this.createEffectAreaCells(cells, lines, convert)
 	}
@@ -1940,10 +2040,13 @@ class Game {
 		this.ctx.scale(this.ground.scale, this.ground.scale)
 
 		this.ctx.globalAlpha = 1
-		this.ctx.font = "8pt Roboto"
+		this.ctx.font = "bold 8pt Roboto"
 		this.ctx.fillStyle = color
+		this.ctx.lineWidth = 1
+		this.ctx.strokeStyle = '#333'
 		this.ctx.textAlign = "center"
 		this.ctx.textBaseline = "middle"
+		this.ctx.strokeText(text, 0, 0)
 		this.ctx.fillText(text, 0, 0)
 
 		this.ctx.restore()
@@ -2019,7 +2122,7 @@ class Game {
 				entity.drawPath(this.ctx)
 			}
 			if (entity === this.hoverEntity || entity === this.mouseEntity || entity === this.selectedEntity) {
-				this.drawEffectArea(entity.reachableCellsArea, this.map.reachableColor, 2, 0.7, 0.1)
+				this.drawEffectArea(entity.reachableCellsArea, this.map.options.reachableColor, 2, 0.7, 0.1)
 			}
 		}
 
@@ -2035,19 +2138,31 @@ class Game {
 			const marker = this.markers[m]
 			this.drawMarker(marker.x, marker.y, marker.color)
 		}
-		if (!this.showCells) {
-			for (const m in this.markersText) {
-				const marker = this.markersText[m]
-				this.drawTextMarker(marker.x, marker.y, marker.text, marker.color)
-			}
-		}
 		// Show pointer cell
 		this.drawPointerCell()
+
+		// Chips (back)
+		this.ctx.save()
+		this.ctx.scale(this.ground.scale, this.ground.scale)
+		for (const chip of this.chips) {
+			chip.drawBack(this.ctx)
+		}
+		this.ctx.restore()
 
 		// Draw elements
 		for (const line of this.drawableElements) {
 			for (const j in line) {
 				line[j].draw(this.ctx)
+			}
+		}
+
+		// Draw cells numbers
+		if (this.showCells) {
+			this.ground.drawCellNumbers(this.ctx)
+		} else {
+			for (const m in this.markersText) {
+				const marker = this.markersText[m]
+				this.drawTextMarker(marker.x, marker.y, marker.text, marker.color)
 			}
 		}
 
@@ -2058,6 +2173,14 @@ class Game {
 
 		// Draw air particles
 		this.particles.drawAir(this.ctx)
+
+		// Chips
+		this.ctx.save()
+		this.ctx.scale(this.ground.scale, this.ground.scale)
+		for (const chip of this.chips) {
+			chip.draw(this.ctx)
+		}
+		this.ctx.restore()
 
 		// Life bars
 		for (const entity of this.leeks) {
@@ -2104,7 +2227,7 @@ class Game {
 		this.ctx.strokeStyle = 'black'
 		this.ctx.lineCap = 'round'
 		this.ctx.lineJoin = 'round'
-		this.ctx.lineWidth = 2
+		this.ctx.lineWidth = 1.8 * this.ground.scale
 		this.ctx.stroke()
 
 		this.ctx.globalAlpha = 1
@@ -2234,7 +2357,11 @@ class Game {
 		if (this.cancelled) { return }
 		// console.log("Resource loaded : " + res + " (" + this.loadedData + "/" + this.numData + ")")
 		if (this.loadedData === this.numData && this.initialized === true) {
-			this.launch() // Start game if all resources are loaded
+			if (!this.launched) {
+				this.launch() // Start game if all resources are loaded
+			} else {
+				this.mapLoaded()
+			}
 		}
 	}
 
@@ -2251,6 +2378,18 @@ class Game {
 		} else {
 			return EntityDirection.NORTH
 		}
+	}
+
+	public updateMap() {
+		this.map = this.maps[this.mapType]
+		this.map.create()
+		this.atmosphere = this.map.options.sound
+	}
+
+	public mapLoaded() {
+		this.ground.updateMap()
+		this.ground.resize(this.width, this.height, this.shadows)
+		this.redraw()
 	}
 }
 

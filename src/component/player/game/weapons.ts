@@ -5,7 +5,7 @@ import { T, Texture } from '@/component/player/game/texture'
 import { Area } from '@/model/area'
 import { Cell } from '@/model/cell'
 import { LeekWars } from '@/model/leekwars'
-import { WeaponsData } from '@/model/weapon'
+import { FishData, WeaponsData } from '@/model/weapon'
 import { Leek } from './leek'
 import { Position } from './position'
 
@@ -33,7 +33,7 @@ abstract class WeaponAnimation {
 	constructor(game: Game, texture: Texture, id: number) {
 		this.game = game
 		this.texture = texture
-		const data = WeaponsData[id]
+		const data = WeaponsData[id] || FishData
 		this.cx = data.cx
 		this.cz = data.cz
 		this.ocx = data.ocx
@@ -45,7 +45,7 @@ abstract class WeaponAnimation {
 		this.mz2 = data.mz2
 		this.sx = data.sx!
 		this.sz = data.sz!
-		this.id = LeekWars.weapons[id].item
+		this.id = id === 0 ? 0 : LeekWars.weapons[id].item
 	}
 	public abstract update(dt: number): void
 	public abstract shoot(leekX: number, leekY: number, handPos: number, angle: number, orientation: number, targetPos: Position, targets: FightEntity[], caster: FightEntity, cell: Cell, scale: number): number
@@ -139,7 +139,7 @@ abstract class RangeWeapon extends WeaponAnimation {
 		super(game, texture, id)
 		this.cartTexture = cartTexture
 		this.sound = sound
-		const data = WeaponsData[id]
+		const data = WeaponsData[id] || FishData
 		this.sx = data.sx!
 		this.sz = data.sz!
 		this.cartX = data.cartX!
@@ -580,6 +580,35 @@ class Rifle extends Firegun {
 		}
 	}
 }
+
+class ExplorerRifle extends Firegun {
+	static textures = [T.shots, T.bullet, T.explorer_rifle, T.explorer_rifle_cartridge]
+	static sounds = [S.rifle]
+	static SHOTS = 2
+	static DELAY = 10
+	shoots: number = 0
+	delay: number = Rifle.DELAY
+	constructor(game: Game) {
+		super(game, T.explorer_rifle, T.explorer_rifle_cartridge, S.rifle, 22)
+	}
+
+	public shoot(leekX: number, leekY: number, handPos: number, angle: number, orientation: number, targetPos: Position, targets: FightEntity[], caster: FightEntity, cell: Cell, scale: number) {
+		this.shoots = Rifle.SHOTS
+		return super.shoot(leekX, leekY, handPos, angle, orientation, targetPos, targets, caster, cell, scale)
+	}
+	public update(dt: number) {
+		if (this.shoots > 0) {
+			this.delay -= dt
+			if (this.delay <= 0) {
+				S.rifle.play(this.game)
+				this.throwBullet(this.bulletX, this.bulletY, this.bulletZ, this.bulletAngle, this.targetPos, this.targets, this.caster, this.cell)
+				this.delay = Rifle.DELAY
+				this.shoots--
+			}
+		}
+	}
+}
+
 class JLaser extends LaserWeapon {
 	static textures = [T.j_laser, T.j_laser_bullet, T.cart_j_laser]
 	static sounds = [S.laser]
@@ -640,4 +669,41 @@ class Shotgun extends Firegun {
 	}
 }
 
-export { WeaponAnimation, WhiteWeaponAnimation, Axe, BLaser, Broadsword, Destroyer, DoubleGun, Electrisor, FlameThrower, Gazor, GrenadeLauncher, IllicitGrenadeLauncher, JLaser, Katana, Laser, MachineGun, Magnum, Rhino, MLaser, MysteriousElectrisor, Pistol, RevokedMLaser, Rifle, Shotgun, UnbridledGazor }
+class Fish extends Firegun {
+	static GRENADE_LAUNCHER_DURATION = 100
+	static textures = [T.shots, T.fish, T.fish_cartridge, T.bubble]
+	static sounds = [S.bubble]
+	static DELAY = 4
+
+	private shoots = 0
+	private delay = 0
+	private bubbleX = 0
+	private	bubbleY = 0
+	private bubbleZ = 0
+	private bubbleAngle = 0
+
+	constructor(game: Game) {
+		super(game, T.fish, T.fish_cartridge, S.bubble, 0)
+	}
+
+	public throwBullet(x: number, y: number, z: number, angle: number, position: Position, targets: FightEntity[], caster: FightEntity, cell: Cell) {
+		this.bubbleX = x
+		this.bubbleY = y
+		this.bubbleZ = z
+		this.bubbleAngle = angle
+		this.shoots = 20
+		return GrenadeLauncher.GRENADE_LAUNCHER_DURATION
+	}
+	public update(dt: number) {
+		if (this.shoots > 0) {
+			this.delay -= dt
+			if (this.delay <= 0) {
+				this.delay = Fish.DELAY
+				this.shoots--
+				this.game.particles.addBubble(this.bubbleX, this.bubbleY, this.bubbleZ, this.bubbleAngle)
+			}
+		}
+	}
+}
+
+export { WeaponAnimation, WhiteWeaponAnimation, Axe, BLaser, Broadsword, Destroyer, DoubleGun, Electrisor, ExplorerRifle, Fish, FlameThrower, Gazor, GrenadeLauncher, IllicitGrenadeLauncher, JLaser, Katana, Laser, MachineGun, Magnum, Rhino, MLaser, MysteriousElectrisor, Pistol, RevokedMLaser, Rifle, Shotgun, UnbridledGazor }

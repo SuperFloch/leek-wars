@@ -131,6 +131,7 @@
 							</template>
 							<div v-else v-html="$t('main.talent_difference_farmer_no_gains', [farmer.name])"></div>
 						</tooltip>
+						<ranking-badge v-if="farmer && farmer.ranking <= 1000 && farmer.in_garden" :id="farmer.id" :ranking="farmer.ranking" category="farmer" />
 					</div>
 					<tooltip v-if="farmer">
 						<template v-slot:activator="{ on }">
@@ -212,12 +213,16 @@
 				<div slot="content" class="content team center">
 					<loader v-if="!farmer" />
 					<div v-else-if="farmer.team">
-						<router-link :to="'/team/' + farmer.team.id">
-							<emblem :team="farmer.team" />
-							<br>
-							<h2>{{ farmer.team.name }}</h2>
-							{{ $t('main.level_n', [farmer.team.level]) }}
-						</router-link>
+						<rich-tooltip-team :id="farmer.team.id" v-slot="{ on }" :bottom="true">
+							<router-link :to="'/team/' + farmer.team.id">
+								<div v-on="on">
+									<emblem :team="farmer.team" />
+									<br>
+									<h2>{{ farmer.team.name }}</h2>
+									{{ $t('main.level_n', [farmer.team.level]) }}
+								</div>
+							</router-link>
+						</rich-tooltip-team>
 					</div>
 					<div v-else>
 						<div v-if="myFarmer">
@@ -239,7 +244,9 @@
 			</panel>
 		</div>
 		<panel>
-			<template slot="title"><img src="/image/icon/trophy.png">{{ $t('trophies') }} <span v-if="farmer">({{ farmer.trophies }})</span></template>
+			<template slot="title">
+				<img src="/image/icon/trophy.png">{{ $t('trophies') }} <span v-if="farmer" class="trophy-count">({{ farmer.trophies }})</span>
+			</template>
 			<template slot="actions">
 				<router-link :to="'/trophies/' + id" class="button flat">
 					<img src="/image/icon/trophy.png">
@@ -380,8 +387,8 @@
 			<span slot="title">{{ $t('create_team') }}</span>
 			{{ $t('team_name') }} <input v-model="createTeamName" type="text">
 			<div slot="actions">
-				<div class="dismiss">{{ $t('cancel') }}</div>
-				<div @click="createTeam">{{ $t('create') }}</div>
+				<div v-ripple class="dismiss">{{ $t('cancel') }}</div>
+				<div v-ripple @click="createTeam">{{ $t('create') }}</div>
 			</div>
 		</popup>
 
@@ -418,8 +425,8 @@
 				<input v-model="newWebsite" type="text" class="input">
 			</div>
 			<div slot="actions">
-				<div @click="websiteDialog = false">{{ $t('cancel') }}</div>
-				<div class="green" @click="changeWebsite">{{ $t('validate') }}</div>
+				<div v-ripple @click="websiteDialog = false">{{ $t('cancel') }}</div>
+				<div v-ripple class="green" @click="changeWebsite">{{ $t('validate') }}</div>
 			</div>
 		</popup>
 
@@ -430,8 +437,8 @@
 				<input v-model="newGitHub" type="text" class="input">
 			</div>
 			<div slot="actions">
-				<div @click="githubDialog = false">{{ $t('cancel') }}</div>
-				<div class="green" @click="changeGithub">{{ $t('validate') }}</div>
+				<div v-ripple @click="githubDialog = false">{{ $t('cancel') }}</div>
+				<div v-ripple class="green" @click="changeGithub">{{ $t('validate') }}</div>
 			</div>
 		</popup>
 
@@ -442,8 +449,8 @@
 				<title-picker ref="picker" :title="farmer.title" />
 			</div>
 			<div slot="actions">
-				<div @click="titleDialog = false">{{ $t('cancel') }}</div>
-				<div class="green" @click="pickTitle($refs.picker.getTitle())">{{ $t('validate') }}</div>
+				<div v-ripple @click="titleDialog = false">{{ $t('cancel') }}</div>
+				<div v-ripple class="green" @click="pickTitle($refs.picker.getTitle())">{{ $t('validate') }}</div>
 			</div>
 		</popup>
 
@@ -1059,5 +1066,8 @@
 		b {
 			padding-right: 4px;
 		}
+	}
+	.trophy-count {
+		margin-left: 5px;
 	}
 </style>

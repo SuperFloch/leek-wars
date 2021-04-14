@@ -9,8 +9,8 @@ enum EffectType {
 	BUFF_TP = 8,
 	DEBUFF = 9,
 	TELEPORT = 10,
-	PERMUTATION = 11,
-	VITALITY = 12,
+	INVERT = 11,
+	BOOST_MAX_LIFE = 12,
 	POISON = 13,
 	SUMMON = 14,
 	RESURRECT = 15,
@@ -43,6 +43,13 @@ enum EffectType {
 	RAW_BUFF_RESISTANCE = 42,
 	PROPAGATION = 43,
 	RAW_BUFF_WISDOM = 44,
+	NOVA_VITALITY = 45,
+	ATTRACT = 46,
+	SHACKLE_AGILITY = 47,
+	SHACKLE_WISDOM = 48,
+	REMOVE_SHACKLE = 49,
+	MOVED_TO_MP = 50,
+	PUSH = 51,
 }
 
 enum EffectModifier {
@@ -55,13 +62,13 @@ enum EffectModifier {
 enum EffectTypeMarket {
 	ATTACK = 1,
 	HEAL = 2,
-	BOOST = 3,
+	DAMAGE_RETURN = 3,
 	SHIELD = 4,
-	TACTIC = 5,
-	DAMAGE_RETURN = 6,
-	POISON = 7,
+	BOOST = 5,
+	POISON = 6,
+	SHACKLE = 7,
 	BULB = 8,
-	SHACKLE = 9
+	TACTIC = 9,
 }
 
 class Effect {

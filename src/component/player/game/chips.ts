@@ -14,6 +14,7 @@ abstract class ChipAnimation {
 	public cell!: Cell
 	public targets: FightEntity[] | undefined
 	public duration: number
+	public launchPos!: Position
 	public position!: Position
 	public launcher!: FightEntity | undefined
 
@@ -23,6 +24,7 @@ abstract class ChipAnimation {
 		this.duration = duration
 	}
 	public launch(launchPos: Position, position: Position, targets: FightEntity[], targetCell: Cell, launcher?: FightEntity) {
+		this.launchPos = launchPos
 		this.cell = targetCell
 		this.targets = targets
 		this.position = position
@@ -35,7 +37,17 @@ abstract class ChipAnimation {
 		this.duration -= dt
 		if (this.duration <= 0) {
 			this.done = true
+			this.end()
 		}
+	}
+	public end() {
+		// nothing
+	}
+	public draw(ctx: CanvasRenderingContext2D) {
+		// nothing to draw
+	}
+	public drawBack(ctx: CanvasRenderingContext2D) {
+		// nothing to draw
 	}
 	public createChipAureol(targets: FightEntity[], texture: Texture) {
 		for (const target of targets) {
@@ -81,18 +93,37 @@ abstract class ChipAnimation {
 			this.createChipHealEntity(target)
 		}
 	}
+	public createChipNovaEntity(target: FightEntity) {
+		const dx = Math.random() * 100 - 50
+		const x = target.ox + dx
+		const y = target.oy + Math.random() * 30 - 15
+		const z = Math.random() * 10
+		const speed = 1.5 + (50 - Math.abs(dx)) / 50
+		const life = 80 - Math.abs(dx)
+		this.game.particles.addImage(x, y, z, 0, 0, speed, 0, T.nova_particle, life)
+	}
+	public createChipNova(targets: FightEntity[]) {
+		for (const target of targets) {
+			this.createChipNovaEntity(target)
+		}
+	}
 }
 
 class ChipShieldAnimation extends ChipAnimation {
 	public texture: Texture
-	constructor(game: Game, texture: Texture) {
+	public area: Area
+	constructor(game: Game, texture: Texture, area: Area = Area.SINGLE_CELL) {
 		super(game, S.shield, 60)
 		this.texture = texture
+		this.area = area
 	}
 	public launch(launchCell: Cell, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
 		super.launch(launchCell, targetPos, targets, targetCell)
-		this.createChipImage(targets, this.texture)
 		this.createChipAureol(targets, T.shield_aureol)
+		this.createChipImage(targets, this.texture)
+		if (this.area !== Area.SINGLE_CELL) {
+			this.game.setEffectArea(targetCell, this.area, 'orange')
+		}
 	}
 }
 
@@ -107,8 +138,8 @@ class ChipBoostAnimation extends ChipAnimation {
 	}
 	public launch(launchCell: Cell, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
 		super.launch(launchCell, targetPos, targets, targetCell)
-		this.createChipImage(targets, this.texture)
 		this.createChipAureol(targets, T.buff_aureol)
+		this.createChipImage(targets, this.texture)
 		if (this.area !== Area.SINGLE_CELL) {
 			this.game.setEffectArea(targetCell, this.area, 'blue')
 		}
@@ -136,8 +167,8 @@ class ChipHealAnimation extends ChipAnimation {
 	}
 	public launch(launchCell: Cell, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
 		super.launch(launchCell, targetPos, targets, targetCell)
-		this.createChipImage(targets, this.texture)
 		this.createChipAureol(targets, T.cure_aureol)
+		this.createChipImage(targets, this.texture)
 		if (this.area !== Area.SINGLE_CELL) {
 			this.game.setEffectArea(targetCell, this.area, 'green')
 		}
@@ -154,6 +185,35 @@ class ChipHealAnimation extends ChipAnimation {
 	}
 }
 
+class ChipNovaVitalityAnimation extends ChipAnimation {
+	public texture: Texture
+	public delay: number = 2
+	public area: Area
+	constructor(game: Game, texture: any, area: Area = Area.SINGLE_CELL) {
+		super(game, S.alteration, 45)
+		this.texture = texture
+		this.area = area
+	}
+	public launch(launchCell: Cell, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
+		super.launch(launchCell, targetPos, targets, targetCell)
+		this.createChipAureol(targets, T.nova_aureol)
+		this.createChipImage(targets, this.texture)
+		if (this.area !== Area.SINGLE_CELL) {
+			this.game.setEffectArea(targetCell, this.area, '#26ffba')
+		}
+	}
+	public update(dt: number) {
+		super.update(dt)
+		this.delay -= dt
+		if (this.delay <= 0) {
+			if (this.targets) {
+				this.createChipNova(this.targets)
+			}
+			this.delay = 2
+		}
+	}
+}
+
 class ChipDebuffAnimation extends ChipAnimation {
 	public texture: Texture
 	public area: Area
@@ -164,8 +224,8 @@ class ChipDebuffAnimation extends ChipAnimation {
 	}
 	public launch(launchCell: Cell, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
 		super.launch(launchCell, targetPos, targets, targetCell)
-		this.createChipImage(targets, this.texture)
 		this.createChipAureol(targets, T.shackle_aureol)
+		this.createChipImage(targets, this.texture)
 		if (this.area !== Area.SINGLE_CELL) {
 			this.game.setEffectArea(targetCell, this.area, '#9f00ef')
 		}
@@ -182,8 +242,8 @@ class ChipPoisonAnimation extends ChipAnimation {
 	}
 	public launch(launchCell: Cell, targetPos: Cell, targets: FightEntity[], targetCell: Cell) {
 		super.launch(launchCell, targetPos, targets, targetCell)
-		this.createChipImage(targets, this.texture)
 		this.createChipAureol(targets, T.poison_aureol)
+		this.createChipImage(targets, this.texture)
 		if (this.area !== Area.SINGLE_CELL) {
 			this.game.setEffectArea(targetCell, this.area, '#ea5ef9')
 		}
@@ -200,8 +260,8 @@ class ChipDamageReturnAnimation extends ChipAnimation {
 	}
 	public launch(launchCell: Cell, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
 		super.launch(launchCell, targetPos, targets, targetCell)
-		this.createChipImage(targets, this.texture)
 		this.createChipAureol(targets, T.damage_return_aureol)
+		this.createChipImage(targets, this.texture)
 		if (this.area !== Area.SINGLE_CELL) {
 			this.game.setEffectArea(targetCell, this.area, Colors.AGILITY_COLOR)
 		}
@@ -211,7 +271,7 @@ class ChipDamageReturnAnimation extends ChipAnimation {
 class Adrenaline extends ChipBoostAnimation {
 	static textures = [T.buff_aureol, T.halo, T.chip_adrenaline]
 	static sounds = [S.buff]
-	constructor(game: Game) { super(game, T.chip_adrenaline, Area.CIRCLE1) }
+	constructor(game: Game) { super(game, T.chip_adrenaline) }
 }
 class Armor extends ChipShieldAnimation {
 	static textures = [T.shield_aureol, T.chip_armor]
@@ -346,6 +406,11 @@ class Helmet extends ChipShieldAnimation {
 	static textures = [T.shield_aureol, T.chip_helmet]
 	constructor(game: Game) { super(game, T.chip_helmet) }
 }
+class Dome extends ChipShieldAnimation {
+	static sounds = [S.shield]
+	static textures = [T.shield_aureol, T.chip_dome]
+	constructor(game: Game) { super(game, T.chip_dome, Area.CIRCLE3) }
+}
 
 class Ice extends ChipAnimation {
 	static textures = [T.ice_small]
@@ -384,7 +449,7 @@ class Inversion extends ChipAnimation {
 	}
 	public launch(launchPos: Position, targetPos: Position, targets: FightEntity[], targetCell: Cell, launcher: FightEntity) {
 		super.launch(launchPos, targetPos, targets, targetCell, launcher)
-		this.target = targets[0]
+		this.target = targets.length ? targets[0] : null
 		this.launchPos = launchPos
 	}
 	public update(dt: number) {
@@ -410,7 +475,7 @@ class Inversion extends ChipAnimation {
 			this.game.particles.addRectangle(x1, y1, z, dx, dy, dz, angle, sx, sy, dsx, dsy, color, alpha, life)
 			this.game.particles.addRectangle(x2, y2, z, dx, dy, dz, angle, sx, sy, dsx, dsy, color, alpha, life)
 		}
-		if (!this.inverted && this.duration < 40 && this.launcher) {
+		if (!this.inverted && this.duration < 40 && this.launcher && this.target) {
 			const cell = this.launcher.cell
 			this.launcher.setCell(this.target.cell)
 			this.target.setCell(cell)
@@ -419,6 +484,55 @@ class Inversion extends ChipAnimation {
 		}
 	}
 }
+
+class Repotting extends ChipAnimation {
+	static textures = []
+	static sounds = [S.teleportation]
+
+	public inverted = false
+	public launchPos!: Position
+	public target: any
+	constructor(game: Game) {
+		super(game, S.teleportation, 120)
+	}
+	public launch(launchPos: Position, targetPos: Position, targets: FightEntity[], targetCell: Cell, launcher: FightEntity) {
+		super.launch(launchPos, targetPos, targets, targetCell, launcher)
+		this.target = targets.length ? targets[0] : null
+		this.launchPos = launchPos
+	}
+	public update(dt: number) {
+		super.update(dt)
+		if (Math.random() > 0.8 && this.duration > 40) {
+			const xx = Math.random() * 60 - 30
+			const x1 = this.launchPos.x + xx
+			const y1 = this.launchPos.y
+			const x2 = this.position.x + xx
+			const y2 = this.position.y
+			const z = 0
+			const dz = 1.7
+			const dx = 0
+			const dy = 0
+			const angle = 0
+			const sx = 10
+			const sy = 10
+			const dsx = 0
+			const dsy = 0.6
+			const color = ['#0a0', '#0f0', '#7f7'][Math.floor(Math.random() * 3)]
+			const life = 50
+			const alpha = 0.4
+			this.game.particles.addRectangle(x1, y1, z, dx, dy, dz, angle, sx, sy, dsx, dsy, color, alpha, life)
+			this.game.particles.addRectangle(x2, y2, z, dx, dy, dz, angle, sx, sy, dsx, dsy, color, alpha, life)
+		}
+		if (!this.inverted && this.duration < 40 && this.launcher && this.target) {
+			const cell = this.launcher.cell
+			this.launcher.setCell(this.target.cell)
+			this.target.setCell(cell)
+			this.game.updateReachableCells()
+			this.inverted = true
+		}
+	}
+}
+
 class LeatherBoots extends ChipBoostAnimation {
 	static textures = [T.buff_aureol, T.halo, T.chip_leather_boots]
 	static sounds = [S.buff]
@@ -522,12 +636,12 @@ class Motivation extends ChipBoostAnimation {
 	constructor(game: Game) { super(game, T.chip_motivation) }
 }
 class Pebble extends ChipAnimation {
-	static textures = [T.pebble_small]
+	static textures = [T.forest_rock_small]
 	static sounds = [S.rock]
 	constructor(game: Game) { super(game, S.rock, 30) }
 	public launch(launchPos: Position, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
 		super.launch(launchPos, targetPos, targets, targetCell)
-		this.game.particles.addGarbage(targetPos.x, targetPos.y, 100, 0, 0, 2, T.pebble_small, 1, 0)
+		this.game.particles.addGarbage(targetPos.x, targetPos.y, 100, 0, 0, 2, T.forest_rock_small, 1, 0, 0.5)
 	}
 }
 class Protein extends ChipBoostAnimation {
@@ -560,10 +674,20 @@ class Remission extends ChipHealAnimation {
 	static sounds = [S.heal]
 	constructor(game: Game) { super(game, T.chip_remission) }
 }
-class Elevation extends ChipHealAnimation {
-	static textures = [T.cure_aureol, T.heal_cross, T.chip_remission]
+class Therapy extends ChipHealAnimation {
+	static textures = [T.cure_aureol, T.heal_cross, T.chip_therapy]
 	static sounds = [S.heal]
-	constructor(game: Game) { super(game, T.chip_remission) }
+	constructor(game: Game) { super(game, T.chip_therapy, Area.PLUS_2) }
+}
+class Serum extends ChipHealAnimation {
+	static textures = [T.cure_aureol, T.heal_cross, T.chip_serum]
+	static sounds = [S.heal]
+	constructor(game: Game) { super(game, T.chip_serum) }
+}
+class Elevation extends ChipHealAnimation {
+	static textures = [T.cure_aureol, T.heal_cross, T.chip_elevation]
+	static sounds = [S.heal]
+	constructor(game: Game) { super(game, T.chip_elevation) }
 }
 class Rock extends ChipAnimation {
 	static textures = [T.rock]
@@ -785,6 +909,17 @@ class Fracture extends ChipDebuffAnimation {
 	static sounds = [S.debuff]
 	constructor(game: Game) { super(game, T.chip_fracture) }
 }
+class Crushing extends ChipDebuffAnimation {
+	static textures = [T.shackle_aureol, T.chip_crushing]
+	static sounds = [S.debuff]
+	constructor(game: Game) { super(game, T.chip_crushing) }
+}
+class Brainwashing extends ChipDebuffAnimation {
+	static textures = [T.shackle_aureol, T.chip_brainwashing]
+	static sounds = [S.debuff]
+	constructor(game: Game) { super(game, T.chip_brainwashing) }
+}
+
 class Solidification extends ChipBoostAnimation {
 	static textures = [T.buff_aureol, T.halo, T.chip_solidification]
 	static sounds = [S.buff]
@@ -806,10 +941,16 @@ class Plague extends ChipPoisonAnimation {
 	constructor(game: Game) { super(game, T.chip_plague, Area.CIRCLE3) }
 }
 class Covid extends ChipPoisonAnimation {
-	static textures = [T.poison_aureol, T.chip_plague]
+	static textures = [T.poison_aureol, T.chip_covid]
 	static sounds = [S.poison]
-	constructor(game: Game) { super(game, T.chip_plague) }
+	constructor(game: Game) { super(game, T.chip_covid) }
 }
+class Arsenic extends ChipPoisonAnimation {
+	static textures = [T.poison_aureol, T.chip_arsenic]
+	static sounds = [S.poison]
+	constructor(game: Game) { super(game, T.chip_arsenic) }
+}
+
 class Thorn extends ChipDamageReturnAnimation {
 	static textures = [T.damage_return_aureol, T.chip_thorn]
 	static sounds = [S.buff]
@@ -820,6 +961,12 @@ class Mirror extends ChipDamageReturnAnimation {
 	static sounds = [S.buff]
 	constructor(game: Game) { super(game, T.chip_mirror, Area.CIRCLE2) }
 }
+class Bramble extends ChipDamageReturnAnimation {
+	static textures = [T.damage_return_aureol, T.chip_bramble]
+	static sounds = [S.buff]
+	constructor(game: Game) { super(game, T.chip_bramble) }
+}
+
 class Ferocity extends ChipBoostAnimation {
 	static textures = [T.buff_aureol, T.halo, T.chip_ferocity]
 	static sounds = [S.buff]
@@ -836,14 +983,14 @@ class Bark extends ChipBoostAnimation {
 	constructor(game: Game) { super(game, T.chip_bark) }
 }
 class Wizardry extends ChipBoostAnimation {
-	static textures = [T.buff_aureol, T.halo, T.chip_ferocity]
+	static textures = [T.buff_aureol, T.halo, T.chip_wizardry]
 	static sounds = [S.buff]
-	constructor(game: Game) { super(game, T.chip_ferocity) }
+	constructor(game: Game) { super(game, T.chip_wizardry) }
 }
 class Knowledge extends ChipBoostAnimation {
-	static textures = [T.buff_aureol, T.halo, T.chip_ferocity]
+	static textures = [T.buff_aureol, T.halo, T.chip_knowledge]
 	static sounds = [S.buff]
-	constructor(game: Game) { super(game, T.chip_ferocity) }
+	constructor(game: Game) { super(game, T.chip_knowledge) }
 }
 class Burning extends ChipAnimation {
 	static textures = [T.chip_burning]
@@ -1003,13 +1150,14 @@ class Plasma extends ChipAnimation {
 	}
 }
 
-class Alteration extends ChipAnimation {
+class NovaDamageChip extends ChipAnimation {
 	static textures = [T.alteration]
 	static sounds = [S.alteration]
+	static DURATION = 60
 	public delay = 2
 	public directions: number[] = []
 	constructor(game: Game) {
-		super(game, S.alteration, 60)
+		super(game, S.alteration, NovaDamageChip.DURATION)
 	}
 	public launch(launchPos: Position, position: Position, targets: FightEntity[], targetCell: Cell) {
 		super.launch(launchPos, position, targets, targetCell)
@@ -1034,6 +1182,15 @@ class Alteration extends ChipAnimation {
 			}
 			this.delay = 4
 		}
+	}
+}
+
+class Alteration extends NovaDamageChip {
+}
+class Desintegration extends NovaDamageChip {
+	public launch(launchPos: Position, position: Position, targets: FightEntity[], targetCell: Cell) {
+		super.launch(launchPos, position, targets, targetCell)
+		this.game.setEffectArea(targetCell, Area.SQUARE_1, '#26ffba', NovaDamageChip.DURATION)
 	}
 }
 
@@ -1066,4 +1223,310 @@ class Jump extends ChipAnimation {
 	}
 }
 
-export { Alteration, Covid, ChipAnimation, Adrenaline, Armor, Acceleration, Antidote, Armoring, BallAndChain, Bandage, Bark, Burning, Carapace, Collar, Covetousness, Cure, DevilStrike, Doping, Drip, Elevation, Ferocity, Fertilizer, Flame, Flash, Fortress, Fracture, Helmet, Ice, Iceberg, Inversion, Jump, Knowledge, LeatherBoots, Liberation, Lightning, Loam, Meteorite, Mirror, Motivation, Pebble, Plague, Plasma, Precipitation, Protein, Punishment, Rage, Rampart, Reflexes, Regeneration, Remission, Rock, Rockfall, SevenLeagueBoots, Shield, Shock, SlowDown, Solidification, Soporific, Spark, Stalactite, Steroid, Stretching, Teleportation, Thorn, Toxin, Tranquilizer, Vaccine, Vampirization, Venom, Wall, WarmUp, Whip, WingedBoots, Wizardry }
+class Mutation extends ChipNovaVitalityAnimation {
+	static textures = [T.nova_aureol, T.nova_particle, T.chip_mutation]
+	static sounds = [S.alteration]
+	constructor(game: Game) { super(game, T.chip_mutation, Area.SQUARE_2) }
+}
+
+class Transmutation extends ChipNovaVitalityAnimation {
+	static textures = [T.nova_aureol, T.nova_particle, T.chip_transmutation]
+	static sounds = [S.alteration]
+	constructor(game: Game) { super(game, T.chip_transmutation, Area.SQUARE_1) }
+}
+
+class Manumission extends ChipAnimation {
+	static textures = [T.manumission_halo]
+	static sounds = [S.liberation]
+	public delay = 2
+	constructor(game: Game) {
+		super(game, S.liberation, 60)
+	}
+	public update(dt: number) {
+		super.update(dt)
+		if (!this.targets) { return  }
+		if (Math.random() > 0.5) {
+			let angle = Math.random() * Math.PI * 2
+			const dx = Math.cos(angle) * 2
+			const dy = Math.sin(angle)
+			angle = Math.atan2(dy, dx)
+			const x = this.position.x + dx * 10
+			const y = this.position.y + dy * 10
+			const z = 50
+			this.game.particles.addImage(x, y, z, dx, dy, 0, angle, T.manumission_halo, 60)
+		}
+	}
+}
+
+class Resurrection extends ChipAnimation {
+	static textures = [T.cloud, T.ray]
+	static sounds = [S.resurrection]
+	public delay = 1
+	constructor(game: Game) { super(game, S.resurrection, 35) }
+	public launch(launchPos: Position, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
+		super.launch(launchPos, targetPos, targets, targetCell)
+		this.game.particles.addImage(targetPos.x, targetPos.y, 70, 0, 0, 0, 0, T.ray, 80)
+		this.game.particles.addImage(targetPos.x - 50, targetPos.y, 150, 0.5, 0, 0, 0, T.cloud, 80)
+		this.game.particles.addImage(targetPos.x + 50, targetPos.y, 150, -0.5, 0, 0, 0, T.cloud, 80)
+		this.game.particles.addImage(targetPos.x + 10, targetPos.y, 160, 0.2, 0, 0, 0, T.cloud, 80)
+		this.game.particles.addImage(targetPos.x - 10, targetPos.y, 160, -0.2, 0, 0, 0, T.cloud, 80)
+	}
+}
+
+class Grapple extends ChipAnimation {
+	static textures = [T.grapple_1, T.grapple_2, T.grapple_back_1, T.grapple_back_2, T.chain, T.chain_back]
+	static sounds = []
+	static DURATION = 70
+	sx!: number
+	sy!: number
+	x!: number
+	y!: number
+	dx!: number
+	dy!: number
+	ex!: number
+	ey!: number
+	d!: number
+	tsx!: number
+	tsy!: number
+	angle!: number
+	front!: boolean
+	right!: boolean
+	chain!: Texture
+	chain_sx!: number
+	chain_sy!: number
+	target: FightEntity | null = null
+	move_end: number = 0
+	constructor(game: Game) { super(game, S.resurrection, Grapple.DURATION) }
+
+	public launch(launchPos: Position, targetPos: Position, targets: FightEntity[], targetCell: Cell) {
+		super.launch(launchPos, targetPos, targets, targetCell)
+		const angle = Math.atan2(targetPos.y - launchPos.y, targetPos.x - launchPos.x)
+		this.dx = Math.cos(angle)
+		this.dy = Math.sin(angle)
+		const offset = this.front ? 30 : 30
+		this.sx = launchPos.x + offset * this.dx
+		this.sy = launchPos.y + offset * this.dy
+		this.target = targets[0]
+		if (this.target) {
+			this.tsx = this.target.ox
+			this.tsy = this.target.oy
+		} else {
+			this.tsx = launchPos.x + this.game.ground.realTileLength * 8 * this.dx
+			this.tsy = launchPos.y + this.game.ground.realTileLength * 8 * this.dy
+		}
+		const total_distance = Math.sqrt(Math.pow(this.sx - this.tsx, 2) + Math.pow(this.sy - this.tsy, 2))
+		const target_distance = Math.sqrt(Math.pow(this.position.x - this.sx, 2) + Math.pow(this.position.y - this.sy, 2))
+		this.move_end = target_distance / total_distance
+		this.ex = this.dx * total_distance
+		this.ey = this.dy * total_distance
+
+		this.front = this.dy > 0
+		this.right = this.dx > 0
+		this.angle = this.dy > 0 ? 26.56 : -26.56
+		this.chain = this.front ? T.chain : T.chain_back
+		const chain_start = this.front ? -5 : 15
+		this.chain_sx = launchPos.x + chain_start * this.dx
+		this.chain_sy = launchPos.y + chain_start * this.dy
+	}
+
+	public update(dt: number) {
+		super.update(dt)
+		const r = 1 - this.duration / Grapple.DURATION
+		const x = r < 0.5
+			? (1 / (1 + Math.pow(10, -10 * (r - 0.25))))
+			: (this.move_end + (1 - this.move_end) / (1 + Math.pow(10,  10 * (r - 0.75))))
+		this.x = this.sx + x * this.ex
+		this.y = this.sy + x * this.ey
+		this.d = Math.sqrt(Math.pow(this.x - this.sx, 2) + Math.pow(this.y - this.sy, 2))
+		if (this.target && r > 0.5) {
+			this.target.ox = this.x
+			this.target.oy = this.y
+		}
+	}
+
+	public end() {
+		if (this.target) {
+			this.target.setCell(this.cell)
+		}
+	}
+
+	public draw(ctx: CanvasRenderingContext2D) {
+		if (!this.front) {
+			this.drawGrapple(ctx)
+		}
+		const W = 100
+		const H = 41
+		const CS = 0.35
+		const CW = W * CS
+		const CH = H * CS
+		ctx.save()
+		ctx.translate(this.chain_sx, this.chain_sy)
+		ctx.scale(this.right ? 1 : -1, 1)
+		ctx.rotate(this.angle * Math.PI / 180)
+		const offset = this.front ? -5 : -7
+		let i = this.d - CW - offset
+		for (; i > 0; i -= CW) {
+			ctx.drawImage(this.chain.texture, i, -25, CW, CH)
+		}
+		i += CW
+		const sw = W * i / CW
+		ctx.drawImage(T.chain.texture, W - sw, 0, sw, H, 0, -25, i, CH)
+		ctx.restore()
+
+		if (this.front) {
+			this.drawGrapple(ctx)
+		}
+	}
+
+	public drawBack(ctx: CanvasRenderingContext2D) {
+		const SC = 0.35
+		const W = 200 * SC
+		const H = 235 * SC
+		const offset = this.front ? -19 : -21
+		ctx.save()
+		ctx.translate(this.x, offset + this.y - H / 2)
+		ctx.scale(this.right ? 1 : -1, 1)
+		ctx.drawImage(this.front ? T.grapple_2.texture : T.grapple_back_2.texture, - W / 2, 0, W, H)
+		ctx.restore()
+	}
+
+	public drawGrapple(ctx: CanvasRenderingContext2D) {
+		const SC = 0.35
+		const W = 200 * SC
+		const H = 235 * SC
+		const offset = this.front ? -19 : -21
+		ctx.save()
+		ctx.translate(this.x, offset + this.y - H / 2)
+		ctx.scale(this.right ? 1 : -1, 1)
+		ctx.drawImage(this.front ? T.grapple_1.texture : T.grapple_back_1.texture, - W / 2, 0, W, H)
+		ctx.restore()
+	}
+}
+
+class BoxingGlove extends ChipAnimation {
+	static textures = [T.glove, T.glove_back, T.chain, T.chain_back]
+	static sounds = []
+	static DURATION = 70
+	sx!: number
+	sy!: number
+	x!: number
+	y!: number
+	dx!: number
+	dy!: number
+	ex!: number
+	ey!: number
+	d!: number
+	tsx!: number
+	tsy!: number
+	angle!: number
+	front!: boolean
+	right!: boolean
+	chain!: Texture
+	chain_sx!: number
+	chain_sy!: number
+	target: FightEntity | null = null
+	moved: boolean = false
+	move_start: number = 0
+	constructor(game: Game) { super(game, S.resurrection, BoxingGlove.DURATION) }
+
+	public launch(launchPos: Position, targetPos: Position, targets: FightEntity[], targetCell: Cell, launcher: FightEntity) {
+		super.launch(launchPos, targetPos, targets, targetCell)
+		const angle = Math.atan2(targetPos.y - launchPos.y, targetPos.x - launchPos.x)
+		this.target = targets[0]
+		let entity_cell
+		if (this.target) {
+			this.tsx = this.target.ox
+			this.tsy = this.target.oy
+			entity_cell = this.target.cell!
+		} else {
+			this.tsx = launchPos.x + this.game.ground.realTileLength * 8 * this.dx
+			this.tsy = launchPos.y + this.game.ground.realTileLength * 8 * this.dy
+			entity_cell = launcher.cell!
+		}
+		// Find real end cell
+		this.cell = this.game.ground.field.getLastAvailableCell(entity_cell, this.cell)
+		const xy = this.game.ground.field.cellToXY(this.cell)
+		this.position = this.game.ground.xyToXYPixels(xy.x, xy.y)
+		const target_distance = Math.sqrt(Math.pow(launchPos.x - this.tsx, 2) + Math.pow(launchPos.y - this.tsy, 2))
+		const total_distance = Math.sqrt(Math.pow(this.position.x - launchPos.x, 2) + Math.pow(this.position.y - launchPos.y, 2))
+		this.move_start = target_distance / total_distance
+
+		this.dx = Math.cos(angle)
+		this.dy = Math.sin(angle)
+		this.ex = this.dx * (total_distance - this.game.ground.realTileLength * 2.2)
+		this.ey = this.dy * (total_distance - this.game.ground.realTileLength * 2.2)
+		this.front = this.dy > 0
+		this.right = this.dx > 0
+		this.angle = this.dy > 0 ? 26.56 : -26.56
+		const offset = this.front ? 50 : 50
+		this.sx = launchPos.x + offset * this.dx
+		this.sy = launchPos.y + offset * this.dy
+		this.chain = this.front ? T.chain : T.chain_back
+		const chain_start = this.front ? -5 : 15
+		this.chain_sx = launchPos.x + chain_start * this.dx
+		this.chain_sy = launchPos.y + chain_start * this.dy
+	}
+
+	public update(dt: number) {
+		super.update(dt)
+		const r = 1 - this.duration / BoxingGlove.DURATION
+		const x = r < 0.2
+			? 1 / (1 + Math.pow(10, -16 * (r - 0.1)))
+			: 1 / (1 + Math.pow(10,  12 * (r - 0.6)))
+		this.x = this.sx + x * this.ex
+		this.y = this.sy + x * this.ey
+		this.d = Math.sqrt(Math.pow(this.x - this.sx, 2) + Math.pow(this.y - this.sy, 2))
+
+		if (this.target) {
+			const tr = Math.max(0, Math.min(1, r / (0.2 * (1 - this.move_start)) - this.move_start))
+			this.target.ox = this.tsx + tr * (this.position.x - this.tsx)
+			this.target.oy = this.tsy + tr * (this.position.y - this.tsy)
+			if (tr >= 1 && !this.moved) {
+				this.target.setCell(this.cell)
+				this.moved = true
+			}
+		}
+	}
+
+	public draw(ctx: CanvasRenderingContext2D) {
+		if (!this.front) {
+			this.drawGlove(ctx)
+		}
+		const W = 100
+		const H = 41
+		const CS = 0.35
+		const CW = W * CS
+		const CH = H * CS
+		ctx.save()
+		ctx.translate(this.chain_sx, this.chain_sy)
+		ctx.scale(this.right ? 1 : -1, 1)
+		ctx.rotate(this.angle * Math.PI / 180)
+		const offset = this.front ? 12 : 17
+		let i = this.d - CW + offset
+		for (; i > 0; i -= CW) {
+			ctx.drawImage(this.chain.texture, i, -25, CW, CH)
+		}
+		i += CW
+		const sw = W * i / CW
+		ctx.drawImage(T.chain.texture, W - sw, 0, sw, H, 0, -25, i, CH)
+		ctx.restore()
+
+		if (this.front) {
+			this.drawGlove(ctx)
+		}
+	}
+
+	public drawGlove(ctx: CanvasRenderingContext2D) {
+		const SC = 0.35
+		const W = 200 * SC
+		const H = 165 * SC
+		const offset = this.front ? -19 : -21
+		ctx.save()
+		ctx.translate(this.x, offset + this.y - H / 2)
+		ctx.scale(this.right ? 1 : -1, 1)
+		ctx.drawImage(this.front ? T.glove.texture : T.glove_back.texture, - W / 2, 0, W, H)
+		ctx.restore()
+	}
+}
+
+export { Alteration, Arsenic, Adrenaline, Armor, Acceleration, Antidote, Armoring, BallAndChain, Bandage, Bark, BoxingGlove, Brainwashing, Bramble, Burning, Covid, ChipAnimation, Carapace, Collar, Covetousness, Crushing, Cure, Desintegration, DevilStrike, Dome, Doping, Drip, Elevation, Ferocity, Fertilizer, Flame, Flash, Fortress, Fracture, Grapple, Helmet, Ice, Iceberg, Inversion, Jump, Knowledge, LeatherBoots, Liberation, Lightning, Loam, Manumission, Meteorite, Mirror, Motivation, Mutation, Pebble, Plague, Plasma, Precipitation, Protein, Punishment, Rage, Rampart, Reflexes, Regeneration, Remission, Repotting, Resurrection, Rock, Rockfall, Serum, SevenLeagueBoots, Shield, Shock, SlowDown, Solidification, Soporific, Spark, Stalactite, Steroid, Stretching, Teleportation, Therapy, Thorn, Toxin, Tranquilizer, Transmutation, Vaccine, Vampirization, Venom, Wall, WarmUp, Whip, WingedBoots, Wizardry }

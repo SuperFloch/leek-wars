@@ -1,18 +1,23 @@
 <template lang="html">
-	<div v-if="compo" class="composition">
-		<emblem :team="{id: compo.team_id, emblem_changed: compo.emblem_changed}" />
-		<div class="name">{{ compo.team_name }}</div>
-		<div class="name">{{ compo.name }}</div>
-		<talent :id="compo.team_id" :talent="compo.talent" category="team" />
-		<br>
-		<span class="level">
-			{{ $t('main.level_n', [compo.level]) }}
-		</span>
-		<br>
-		<div class="level">
-			{{ $t('main.total_level_n', [compo.total_level]) }}
+	<rich-tooltip-composition :id="compo.id" v-slot="{ on }" :bottom="true" :instant="true" class="rich">
+		<div class="composition" v-on="on">
+			<emblem :team="{id: compo.team_id, emblem_changed: compo.emblem_changed}" />
+			<div class="name">
+				{{ compo.team_name }}
+			</div>
+			<span class="level">
+				{{ $t('main.level_n', [compo.level]) }}
+			</span>
+			<div class="name">
+				{{ compo.name }}
+			</div>
+			<talent :id="compo.team_id" :talent="compo.talent" category="team" />
+			<br>
+			<div class="level">
+				{{ compo.leek_count }} <img src="/image/icon/black/leek.png"> • {{ $t('main.level_n', [compo.total_level]) }}
+			</div>
 		</div>
-	</div>
+	</rich-tooltip-composition>
 </template>
 
 <script lang="ts">
@@ -25,6 +30,9 @@
 </script>
 
 <style lang="scss" scoped>
+	.composition {
+		padding: 10px 0;
+	}
 	.emblem {
 		width: 120px;
 		height: 120px;
@@ -32,13 +40,27 @@
 	.name {
 		font-size: 18px;
 		font-weight: 500;
-		padding: 0 5px;
-		padding-top: 4px;
+		padding: 5px;
+		padding-bottom: 3px;
 		text-overflow: ellipsis;
 		overflow: hidden;
 		white-space: nowrap;
 	}
 	.talent {
 		margin: 5px 0;
+	}
+	.level {
+		font-size: 15px;
+		padding-top: 3px;
+		color: #555;
+		font-weight: 500;
+		display: flex;
+		align-items: flex-start;
+		justify-content: center;
+		img {
+			width: 16px;
+			opacity: 0.5;
+			margin: 0 3px;
+		}
 	}
 </style>

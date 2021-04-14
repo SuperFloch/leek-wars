@@ -10,6 +10,8 @@ import { Team } from '@/model/team'
 import Vue from 'vue'
 import Vuex, { Store } from 'vuex'
 import { AI } from './ai'
+import { fileSystem } from './filesystem'
+import { Leek } from './leek'
 import { vueMain } from './vue'
 import { Weapon } from './weapon'
 
@@ -28,6 +30,7 @@ class LeekWarsState {
 	public conversationsList: Conversation[] = []
 	public last_ping: number = 0
 	public connected_farmers: number = 0
+	public loadingConversations: boolean = false
 }
 
 function updateTitle(state: LeekWarsState) {
@@ -43,12 +46,14 @@ function loadNotifications(state: LeekWarsState) {
 	})
 }
 function loadMessages(state: LeekWarsState) {
-	LeekWars.get('message/get-latest-conversations/20').then(data => {
+	state.loadingConversations = true
+	LeekWars.get('message/get-latest-conversations/25').then(data => {
 		state.unreadMessages = data.unread
 		updateTitle(state)
 		for (const conversation of data.conversations) {
 			store.commit('new-conversation', conversation)
 		}
+		state.loadingConversations = false
 	})
 }
 
@@ -85,6 +90,7 @@ const store: Store<LeekWarsState> = new Vuex.Store({
 			localStorage.removeItem('login-attempt')
 			localStorage.removeItem('token')
 			localStorage.removeItem('editor/tabs')
+			localStorage.removeItem('garden/category') // On revient à la catégorie potager par défaut
 			state.token = null
 			state.farmer = null
 			LeekWars.socket.disconnect()
@@ -96,6 +102,7 @@ const store: Store<LeekWarsState> = new Vuex.Store({
 			state.unreadMessages = 0
 			state.unreadNotifications = 0
 			state.chat = {}
+			fileSystem.clear()
 			console.clear()
 		},
 		"wsconnected"(state: LeekWarsState) {
@@ -140,6 +147,14 @@ const store: Store<LeekWarsState> = new Vuex.Store({
 				Vue.set(state.chat, 'team', new Chat("team", ChatType.TEAM))
 			}
 			state.chat.team.add(data.message[0], data.message[1], data.message[5], data.message[4], data.message[2], data.message[3])
+			vueMain.$emit('chat', ['team'])
+		},
+		'team-chat-receive-pack'(state: LeekWarsState, pack: any) {
+			if (!pack.length) { return }
+			if (!state.chat.team) {
+				Vue.set(state.chat, 'team', new Chat("team", ChatType.TEAM))
+			}
+			state.chat.team.set_messages(pack.map((m: any) => ['team', m[0], m[1], m[2], m[3], m[4], m[5]]))
 			vueMain.$emit('chat', ['team'])
 		},
 		'br'(state: LeekWarsState, data: any) {
@@ -239,6 +254,11 @@ const store: Store<LeekWarsState> = new Vuex.Store({
 		'change-skin'(state: LeekWarsState, data: any) {
 			if (state.farmer) {
 				state.farmer.leeks[data.leek].skin = data.skin
+			}
+		},
+		'change-fish'(state: LeekWarsState, data: any) {
+			if (state.farmer) {
+				state.farmer.leeks[data.leek].fish = data.fish
 			}
 		},
 		'change-hat'(state: LeekWarsState, data: any) {
@@ -519,6 +539,20 @@ const store: Store<LeekWarsState> = new Vuex.Store({
 		},
 		'connected-count'(state: LeekWarsState, farmers) {
 			state.connected_farmers = farmers
+		},
+		'new-leek'(state: LeekWarsState, leek: Leek) {
+			if (state.farmer) {
+				Vue.set(state.farmer.leeks, leek.id, leek)
+			}
+		},
+		'load-conversations'(state: LeekWarsState) {
+			state.loadingConversations = true
+			LeekWars.get('message/get-conversations/' + state.conversationsList.length + '/25').then(data => {
+				for (const conversation of data.conversations) {
+					store.commit('new-conversation', conversation)
+				}
+				state.loadingConversations = false
+			})
 		}
 	},
 })

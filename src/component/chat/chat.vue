@@ -74,8 +74,8 @@
 				</i18n>
 			</template>
 			<div slot="actions">
-				<div @click="muteDialog = false">{{ $t('main.cancel') }}</div>
-				<div class="mute red" @click="muteConfirm">{{ $t('warning.confirm_mute') }}</div>
+				<div v-ripple @click="muteDialog = false">{{ $t('main.cancel') }}</div>
+				<div v-ripple class="mute red" @click="muteConfirm">{{ $t('warning.confirm_mute') }}</div>
 			</div>
 		</popup>
 		<popup v-model="unmuteDialog" :width="600">
@@ -87,8 +87,8 @@
 				</i18n>
 			</div>
 			<div slot="actions">
-				<div @click="unmuteDialog = false">{{ $t('main.cancel') }}</div>
-				<div class="unmute red" @click="unmuteConfirm">{{ $t('warning.unmute') }}</div>
+				<div v-ripple @click="unmuteDialog = false">{{ $t('main.cancel') }}</div>
+				<div v-ripple class="unmute red" @click="unmuteConfirm">{{ $t('warning.unmute') }}</div>
 			</div>
 		</popup>
 	</div>
@@ -197,7 +197,7 @@
 			if (this.channel === 'team') {
 				if (!this.$store.state.chat.team) {
 					this.$store.commit('init-team-chat')
-					LeekWars.socket.send([SocketMessage.TEAM_CHAT_ENABLE])
+					LeekWars.socket.send([SocketMessage.TEAM_CHAT_ENABLE_FAST])
 				}
 			} else if (this.channel.startsWith('pm-')) {
 				const id = parseInt(this.channel.replace('pm-', ''), 10)
@@ -302,9 +302,6 @@
 		margin: 6px 8px;
 		color: #aaa;
 	}
-	.message a {
-		color: #aaa;
-	}
 	.avatar-wrapper {
 		position: sticky;
 		top: 8px;
@@ -337,6 +334,7 @@
 		display: block;
 		padding-bottom: 2px;
 		padding-right: 60px;
+		color: #777;
 	}
 	.text {
 		word-break: break-word;
@@ -373,6 +371,12 @@
 	}
 	.text ::v-deep a {
 		color: #5fad1b;
+	}
+	.text ::v-deep .v-icon {
+		color: #5fad1b;
+		font-size: 18px;
+		margin-right: 4px;
+		vertical-align: baseline;
 	}
 	.br-notification {
 		background: #5fad1b;

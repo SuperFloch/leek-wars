@@ -1,3 +1,102 @@
+222:
+  title: "LeekScript 1.1 : Object Oriented Programming and language improvements"
+  added:
+    - "#ai Added LeekScript version 1.1."
+    - "#ai Added object-oriented programming: classes and objects (LS 1.1)."
+    - "#ai Switch to default reference (functions, foreach, arrays) (LS 1.1)."
+    - "#ai Added the clone() function to duplicate a value."
+    - "LeekScript: returned errors now have a complete call stack."
+    - "Fight report: ability to navigate through towers easily."
+  improved:
+    - "Editor: several errors are returned instead of just one."
+    - "#ai Semicolons are no longer required."
+    - Added javadoc on global and classes.
+    - Updated the javadoc without having to refresh the page.
+    - Improvement of the basic AI model (thanks to Oimat).
+    - Ternaries now cost 1 operation, like normal conditions.
+  fixed:
+    - "#ai Fixed arrayFilter returning an associative array (LS 1.1)."
+    - "#ai Fixed escape of '\\\\' strings (LS 1.1)."
+    - Fixed a bug loading the fight with tabs in the say().
+    - Correction of NOVA_VITALITY effects in the fight report (thanks to Ref).
+    - "#ai Correction of the operator ^= which becomes well the xor assignment (LS 1.1)."
+    - Correction of the display of "null" in the javadoc some functions.
+    - The shuffle function is now deterministic (for the same seed).
+    - Correction of translations in the documentation.
+
+221:
+  title: "16 new chips, Push/Pull, Team Tooltips, AI Trashcan, Explorer Rifle"
+  added:
+    - "#ai Added 16 new bullets, in many categories."
+    - "#ai Added a push/pull mechanism."
+    - "#ai Added NOVA_VITALITY, SLIDE_TO, SHACKLE_AGILITY/WISDOM, REMOVE_SHACKLES effects."
+    - "#ai Added SQUARE_1, SQUARE_2 and FIRST_IN_LINE areas."
+    - "#ai Added the Explorer Rifle weapon."
+    - Added animation for the Resurrection chip.
+    - Adding a trashcan of deleted AI in the editor.
+    - Advanced team and composition tooltips.
+  improved:
+    - The number of obstacles in a map is more variable.
+    - More items at levels multiple of 10.
+    - Faster loading of battle histories.
+    - Added export date when downloading AI.
+    - Added a "drag to scroll" mention on the registration page.
+    - The size of text in combat varies depending on the screen and pixel density.
+    - Improved the visibility of the top life bars in combat (and dark mode).
+    - "Capital window: added a button to remove all the capital of a feature."
+    - Added golden hands for the golden skin.
+    - "Vegetable garden : improvement of the display of levels + number of leeks of a compo."
+    - Display of team emblems under team fights.
+    - Price increase in Habs for items also purchased in crystals (x2).
+    - Acceleration of the loading of the team page.
+    - Reorganization of chip categories in the market.
+    - The Fracture chip no longer reduces magic (only strength).
+  fixed:
+    - Correction of the description of the Sniper trophy.
+    - "Fixed: Fixed the error message when using an erroneous include."
+    - When a new leek is created, it appears in the menu.
+    - "Fixed: Fixed the status of an AI (display of an icon)."
+    - Correction of the display of code on the chat in Firefox (too many line feeds).
+    - Ability to click on items anyway when the tooltip passes over them.
+    - Corrected the closing bug of advanced tooltips.
+    - "Market: display of items too high level even with several leeks."
+    - Correction of a mouse shift when hovering with the fight.
+    - Correction of the position of the hands in combat.
+    - Update AI when changing account.
+    - Fixed a cache problem in the editor when an AI is deleted.
+
+220:
+  title: Maps redesign, profile rankings and combat options
+  added:
+    - Redesign of all the cards of the game with a better quality.
+    - Display of the ranking on the profile of leeks, farmer and team if position < 1000.
+    - Added an option in combat to display or not the actions.
+    - Added a night mode option in combat for actions and entity info.
+    - Added an option to display or not the effects of entities under the life bars.
+    - Added an option to display a plain background in combat.
+    - "Encyclopedia : added a view counter."
+    - "Encyclopedia : 'Random page' feature."
+    - "Encyclopedia : command to make a link in the chat."
+    - "Encyclopedia: automatic table of contents ({{ summary }})."
+    - "Encyclopedia: item cards (weapons, bullets, potions)."
+    - "Combat: added tooltips on effects to display their details."
+  improved:
+    - Added a day separator in the chat, like before.
+    - Added a message to buy fights in the vegetable garden.
+    - Special colors for trophy and tournament won notifications alerts.
+    - Added keyboard shortcuts for all options in the fight.
+    - Improved visibility of markText() and cell numbers in fights.
+    - The actions side panel is now resizable and no longer overlaps the combat.
+    - Improved obstacle style in tactical mode.
+    - Added a sorting by rarity on the trophies page (thanks to BougeLeGrosOrteil).
+    - The size of the combat player is better calculated and takes more space, especially on mobile.
+    - "#ai Critical hits increase effects by 30% instead of 40%."
+  fixed:
+    - "Fixed a crash of the LeekScript linked to the tables (thanks to Nmnnm)."
+    - "Fixed a bug with the launch of test fights on some scenarios."
+    - Fixed a bug when there is no more AI in the editor.
+    - Fixed a bug when jumping in the fight.
+
 219:
   title: Encyclopedia and new features
   added:

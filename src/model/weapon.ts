@@ -90,9 +90,13 @@ const WeaponsData = {
 	// RevokedMLaser
 	21: { w: 194, h: 56, cx: 15, cz: 38, ocx: 0, x: -70, z: -20, mx1: 70, mz1: 34, mx2: 115, mz2: 34, sx: 126, sz: 25, cartX: 60, cartZ: 20, cartAngle: Math.PI / 2, recoilForce: 18, top: 4, bottom: 34, white: false },
 	// Rifle
-	22: { w: 180, h: 51, cx: 15, cz: 30, ocx: 0, x: -50, z: -20, mx1: 36, mz1: 34, mx2: 74, mz2: 32, sx: 50, sz: 25, cartX: 60, cartZ: 20, cartAngle: Math.PI / 2, recoilForce: 18, top: 4, bottom: 34, white: false },
+	22: { w: 180, h: 51, cx: 15, cz: 30, ocx: 0, x: -50, z: -20, mx1: 36, mz1: 34, mx2: 74, mz2: 32, sx: 150, sz: 25, cartX: 60, cartZ: 20, cartAngle: Math.PI / 2, recoilForce: 18, top: 4, bottom: 34, white: false },
 	// Mini
 	23: { w: 90, h: 51, cx: 12, cz: 40, ocx: 0, x: 15, z: -15, mx1: 24, mz1: 27, mx2: 11, mz2: 35, sx: 90, sz: 22, cartX: 60, cartZ: 20, cartAngle: Math.PI / 2, recoilForce: 18, top: 3, bottom: 15, white: false },
+	// Explorer's Rifle
+	24: { w: 184, h: 55, cx: 15, cz: 30, ocx: 0, x: -50, z: -20, mx1: 37, mz1: 35, mx2: 75, mz2: 33, sx: 150, sz: 25, cartX: 60, cartZ: 20, cartAngle: Math.PI / 2, recoilForce: 18, top: 4, bottom: 34, white: false },
 } as {[key: number]: WeaponData}
 
-export { Weapon, WeaponsData, WeaponTemplate }
+const FishData = { w: 150, h: 65, cx: 25, cz: 45, ocx: 0, x: -35, z: -15, mx1: 12, mz1: 44, mx2: 53, mz2: 57, sx: 110, sz: 10, cartX: 60, cartZ: 20, cartAngle: Math.PI / 2, recoilForce: 18, top: 7, bottom: 50, white: false } as WeaponData
+
+export { FishData, Weapon, WeaponsData, WeaponTemplate }

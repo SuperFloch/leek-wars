@@ -7,6 +7,7 @@
 					<v-icon>mdi-chevron-right</v-icon>
 					<router-link v-if="topic" :to="'/forum/category-' + category.id">{{ categoryName }}</router-link>
 					<v-icon>mdi-chevron-right</v-icon>
+					<img v-if="category && forumLanguages.length >= 2 && category.lang" class="flag" :src="LeekWars.languages[category.lang].flag">
 					<span ref="topicTitle" :contenteditable="topicEditing" class="topic-title">{{ topic ? topic.name : '...' }}</span>
 					<div v-if="topic" class="info attrs">
 						<v-icon v-if="topic.resolved" :title="$t('resolved')" class="attr">mdi-check-circle</v-icon>
@@ -117,7 +118,7 @@
 										&nbsp;&nbsp;-&nbsp;&nbsp;
 										<span class="pin" @click="pin">{{ topic.pinned ? $t('unpin') : $t('pin') }}</span>
 									</template>
-									<template v-if="$store.state.connected && (topic.owner === $store.state.farmer.id || category.moderator)">
+									<template v-if="message.id == -1 && $store.state.connected && (topic.owner === $store.state.farmer.id || category.moderator)">
 										&nbsp;&nbsp;-&nbsp;&nbsp;
 										<span class="resolve" @click="resolve">{{ topic.resolved ? $t('unsolved') : $t('solved') }}</span>
 									</template>
@@ -155,8 +156,8 @@
 			<span slot="title">{{ $t('do_you_want_to_delete_message') }}</span>
 			{{ $t('undoable_action') }}
 			<div slot="actions">
-				<div @click="deleteMessageDialog = false">{{ $t('cancel') }}</div>
-				<div class="red" @click="deleteMessage">{{ $t('delete') }}</div>
+				<div v-ripple @click="deleteMessageDialog = false">{{ $t('cancel') }}</div>
+				<div v-ripple class="red" @click="deleteMessage">{{ $t('delete') }}</div>
 			</div>
 		</popup>
 
@@ -165,8 +166,8 @@
 			<span slot="title">{{ $t('do_you_want_to_delete_topic') }}</span>
 			{{ $t('undoable_action') }}
 			<div slot="actions">
-				<div @click="deleteTopicDialog = false">{{ $t('cancel') }}</div>
-				<div class="red" @click="deleteTopic">{{ $t('delete') }}</div>
+				<div v-ripple @click="deleteTopicDialog = false">{{ $t('cancel') }}</div>
+				<div v-ripple class="red" @click="deleteTopic">{{ $t('delete') }}</div>
 			</div>
 		</popup>
 	</div>
@@ -194,6 +195,7 @@
 		topicEditing: boolean = false
 		action = {icon: 'mdi-newspaper-plus', click: () => this.toggleSubscribe()}
 		sendingMessage: boolean = false
+		forumLanguages: string[] = []
 
 		get categoryName() {
 			return this.category ? this.category.team > 0 ? this.category.name : this.$t('forum-category.' + this.category.name) : ''
@@ -220,7 +222,8 @@
 			this.page = page
 
 			if (this.topic) { this.topic.messages = null }
-			LeekWars.get('forum/get-messages/' + topic + '/' + this.page).then(data => {
+			this.forumLanguages = (localStorage.getItem('forum/languages') as string || this.$i18n.locale).split(',')
+			LeekWars.get('forum/get-messages/' + topic + '/' + this.forumLanguages + '/' + this.page).then(data => {
 				this.topic = data.topic
 				if (!this.topic) { return }
 				this.category = data.category
@@ -423,6 +426,12 @@
 		padding-right: 0px;
 		.v-icon {
 			vertical-align: text-bottom;
+		}
+		.flag {
+			height: 20px;
+			vertical-align: middle;
+			margin-bottom: 2px;
+			margin-right: 6px;
 		}
 	}
 	.tabs {

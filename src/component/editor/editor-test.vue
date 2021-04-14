@@ -174,11 +174,11 @@
 			</v-tab-item>
 		</v-tabs>
 		<div slot="actions">
-			<div @click="$emit('input', false)">
+			<div v-ripple @click="$emit('input', false)">
 				<v-icon>mdi-close</v-icon>
 				<span>{{ $t('main.cancel') }}</span>
 			</div>
-			<div class="green" @click="launchTest">
+			<div v-ripple class="green" @click="launchTest">
 				<v-icon>mdi-play</v-icon>
 				<span>{{ $t('test_validate') }}</span>
 			</div>
@@ -192,7 +192,7 @@
 				<br><br>
 				<div class="title">{{ $t('templates') }}</div>
 				<div class="templates">
-					<div v-for="(template, t) of templates" :key="t" v-ripple :class="{selected: selectedTemplate === t}" class="template card" @click="selectedTemplate = t; newScenarioName = template.name">
+					<div v-for="(template, t) of templates" :key="t" v-ripple :class="{selected: selectedTemplate === t}" class="template card" @click="selectedTemplate = t">
 						<div v-if="template.category == 'free'">
 							<v-icon>mdi-wrench</v-icon>
 						</div>
@@ -214,8 +214,8 @@
 				</div>
 			</div>
 			<div slot="actions">
-				<div @click="newScenarioDialog = false">{{ $t('main.cancel') }}</div>
-				<div class="green" @click="createScenario">{{ $t('main.create') }}</div>
+				<div v-ripple @click="newScenarioDialog = false">{{ $t('main.cancel') }}</div>
+				<div v-ripple class="green" @click="createScenario">{{ $t('main.create') }}</div>
 			</div>
 		</popup>
 
@@ -226,8 +226,8 @@
 				<input v-model="newLeekName" :placeholder="$t('leek_name')" type="text" class="input" @keyup.enter="createLeek">
 			</div>
 			<div slot="actions">
-				<div @click="newLeekDialog = false">{{ $t('main.cancel') }}</div>
-				<div class="green" @click="createLeek">{{ $t('main.create') }}</div>
+				<div v-ripple @click="newLeekDialog = false">{{ $t('main.cancel') }}</div>
+				<div v-ripple class="green" @click="createLeek">{{ $t('main.create') }}</div>
 			</div>
 		</popup>
 
@@ -772,7 +772,11 @@
 				.error(error => LeekWars.toast(this.$t('error_' + error.error, error.params)))
 
 			Vue.delete(this.scenarios, scenario.id)
-			this.selectScenario(LeekWars.first(this.scenarios)!)
+			if (!LeekWars.isEmptyObj(this.scenarios)) {
+				this.selectScenario(LeekWars.first(this.scenarios)!)
+			} else {
+				this.currentScenario = null
+			}
 		}
 		createScenario() {
 			LeekWars.post('test-scenario/new', {name: this.newScenarioName}).then(data => {
@@ -811,6 +815,7 @@
 		}
 
 		updateScenarioBotsLevels() {
+			if (!this.currentScenario) { return }
 			let total_level = 0
 			let count = 0
 			const all_leeks = this.currentScenario!.team1.concat(this.currentScenario!.team2)
@@ -880,7 +885,7 @@
 		}
 		createLeek() {
 			LeekWars.post('test-leek/new', {name: this.newLeekName}).then(data => {
-				const leek = {name: this.newLeekName, id: data.id}
+				const leek = {name: this.newLeekName, id: data.id, ai: -1}
 				this.leeks.push(leek as any)
 				for (const k in data.data) {
 					Vue.set(leek, k, data.data[k])

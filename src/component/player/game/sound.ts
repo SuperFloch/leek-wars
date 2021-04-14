@@ -88,6 +88,7 @@ class S {
 	public static flame_thrower = new Sound(LeekWars.STATIC + "sound/flame_thrower.mp3", VOL_OFFENSIVE_SOUND)
 	public static gazor = new Sound(LeekWars.STATIC + "sound/gazor.mp3", VOL_OFFENSIVE_SOUND)
 	public static rifle = new Sound(LeekWars.STATIC + "sound/rifle.wav", VOL_OFFENSIVE_SOUND)
+	public static bubble = new Sound(LeekWars.STATIC + "sound/bubble.wav", VOL_OFFENSIVE_SOUND)
 	// chips
 	public static heal = new Sound(LeekWars.STATIC + "sound/heal.mp3", VOL_DEFFENSIVE_SOUND)
 	public static buff = new Sound(LeekWars.STATIC + "sound/buff.mp3", VOL_DEFFENSIVE_SOUND)
@@ -103,6 +104,7 @@ class S {
 	public static teleportation = new Sound(LeekWars.STATIC + "sound/teleportation.mp3", VOL_SPECIAL_SOUND)
 	public static debuff = new Sound(LeekWars.STATIC + "sound/debuff.mp3", VOL_OFFENSIVE_SOUND)
 	public static alteration = new Sound(LeekWars.STATIC + "sound/alteration.wav", VOL_OFFENSIVE_SOUND)
+	public static resurrection = new Sound(LeekWars.STATIC + "sound/resurrection.mp3", VOL_OFFENSIVE_SOUND)
 	// other
 	public static move = new Sound(LeekWars.STATIC + "sound/move.mp3", VOL_OTHER_SOUND)
 	public static lama = new Sound(LeekWars.STATIC + "sound/lama.mp3", VOL_OTHER_SOUND)

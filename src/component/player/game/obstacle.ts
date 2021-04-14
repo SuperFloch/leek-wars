@@ -5,7 +5,7 @@ import { Cell } from '@/model/cell'
 class Obstacle {
 	public game: Game
 	public size: number
-	public type: number
+	public type!: number
 	public x: number
 	public y: number
 	public baseTexture!: Texture | null
@@ -20,14 +20,14 @@ class Obstacle {
 	public cell: Cell
 	public pumpkin: boolean = false
 
-	constructor(game: Game, type: number, size: number, cell: Cell) {
+	constructor(game: Game, size: number, cell: Cell) {
 		this.game = game
 		if (game.halloween) {
 			this.pumpkin = Math.random() > 0.7
 		}
 		// Caractéristiques
 		this.size = size
-		this.type = type
+		this.updateType()
 		// Position
 		const pos = game.ground.field.cellToXY(cell)
 		this.x = pos.x
@@ -35,9 +35,14 @@ class Obstacle {
 		this.cell = cell
 	}
 
+	public updateType() {
+		const types = this.size === 2 ? this.game.map.options.largeObstacles.length : this.game.map.options.smallObstacles.length
+		this.type = this.game.map.random.next() * types | 0
+	}
+
 	public resize() {
 		// Create the cache texture
-		const textureType = this.size === 2 ? this.game.map.obstaclesBig : this.game.map.obstaclesSmall
+		const textureType = this.size === 2 ? this.game.map.options.largeObstacles : this.game.map.options.smallObstacles
 		this.baseTexture = this.pumpkin ? T.pumpkin : textureType[this.type]
 
 		if (this.size === 1) {
@@ -79,26 +84,63 @@ class Obstacle {
 	}
 
 	public draw(ctx: CanvasRenderingContext2D) {
-		if (this.game.tactic) {
+		if (this.game.tactic || !this.baseTexture) {
 			ctx.save()
-			ctx.globalAlpha = 0.6
-			ctx.fillStyle = "black"
+			ctx.globalAlpha = 0.8
 			ctx.translate(this.cellX, this.cellY)
 
-			ctx.beginPath()
+			const H = 8 * this.game.ground.scale
 			if (this.size === 1) {
-				ctx.moveTo(0, -this.game.ground.tileSizeY / 2 + 2)
+				ctx.fillStyle = this.game.map.tacticSmallColors[0]
+				ctx.beginPath()
+				ctx.moveTo(0, -H - this.game.ground.tileSizeY / 2 + 2)
+				ctx.lineTo(this.game.ground.tileSizeX / 2 - 4, -H)
+				ctx.lineTo(0, -H + this.game.ground.tileSizeY / 2 - 2)
+				ctx.lineTo(-this.game.ground.tileSizeX / 2 + 4, -H)
+				ctx.closePath()
+				ctx.fill()
+				ctx.fillStyle = this.game.map.tacticSmallColors[1]
+				ctx.beginPath()
+				ctx.moveTo(this.game.ground.tileSizeX / 2 - 4, -H)
 				ctx.lineTo(this.game.ground.tileSizeX / 2 - 4, 0)
 				ctx.lineTo(0, this.game.ground.tileSizeY / 2 - 2)
+				ctx.lineTo(0, -H + this.game.ground.tileSizeY / 2 - 2)
+				ctx.closePath()
+				ctx.fill()
+				ctx.fillStyle = this.game.map.tacticSmallColors[2]
+				ctx.beginPath()
+				ctx.moveTo(-this.game.ground.tileSizeX / 2 + 4, -H)
 				ctx.lineTo(-this.game.ground.tileSizeX / 2 + 4, 0)
+				ctx.lineTo(0, this.game.ground.tileSizeY / 2 - 2)
+				ctx.lineTo(0, -H + this.game.ground.tileSizeY / 2 - 2)
+				ctx.closePath()
+				ctx.fill()
 			} else {
-				ctx.moveTo(0, -this.game.ground.tileSizeY + 2)
+				ctx.fillStyle = this.game.map.tacticLargeColors[0]
+				ctx.beginPath()
+				ctx.moveTo(0, -H - this.game.ground.tileSizeY + 2)
+				ctx.lineTo(this.game.ground.tileSizeX - 4, -H)
+				ctx.lineTo(0, -H + this.game.ground.tileSizeY - 2)
+				ctx.lineTo(-this.game.ground.tileSizeX + 4, -H)
+				ctx.closePath()
+				ctx.fill()
+				ctx.fillStyle = this.game.map.tacticLargeColors[1]
+				ctx.beginPath()
+				ctx.moveTo(this.game.ground.tileSizeX - 4, -H)
 				ctx.lineTo(this.game.ground.tileSizeX - 4, 0)
 				ctx.lineTo(0, this.game.ground.tileSizeY - 2)
+				ctx.lineTo(0, -H + this.game.ground.tileSizeY - 2)
+				ctx.closePath()
+				ctx.fill()
+				ctx.fillStyle = this.game.map.tacticLargeColors[2]
+				ctx.beginPath()
+				ctx.moveTo(-this.game.ground.tileSizeX + 4, -H)
 				ctx.lineTo(-this.game.ground.tileSizeX + 4, 0)
+				ctx.lineTo(0, this.game.ground.tileSizeY - 2)
+				ctx.lineTo(0, -H + this.game.ground.tileSizeY - 2)
+				ctx.closePath()
+				ctx.fill()
 			}
-			ctx.closePath()
-			ctx.fill()
 			ctx.restore()
 		} else {
 			if (this.texture) {

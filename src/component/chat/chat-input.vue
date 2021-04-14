@@ -68,7 +68,7 @@
 				if (this.message === '/ping') {
 					// LW.chat.last_ping = Date.now()
 				}
-				this.$emit('message', this.message)
+				this.$emit('message', this.message.trim())
 				input.textContent = ''
 				this.commandsEnabled = false
 			}
